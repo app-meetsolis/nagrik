@@ -123,8 +123,12 @@
   }
   body {
     @apply bg-background text-foreground;
+    /* Push content above iOS home indicator */
+    padding-bottom: env(safe-area-inset-bottom);
   }
   html {
     @apply font-sans;
+    /* Fill the full visual viewport on iOS Safari */
+    height: -webkit-fill-available;
   }
 }

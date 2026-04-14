@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import "./globals.css";
@@ -16,6 +16,13 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Nagrik — Civic Accountability Platform",
   description: "Report civic issues. Hold authorities accountable. Jaipur.",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,   // prevents iOS zoom on input focus
+  themeColor: "#09090b",
 };
 
 export default function RootLayout({
