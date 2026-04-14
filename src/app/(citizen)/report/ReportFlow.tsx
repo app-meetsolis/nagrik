@@ -147,15 +147,7 @@ export default function ReportFlow({ firstName }: Props) {
 
       {/* ── CAPTURE ─────────────────────────────────────────────────────── */}
       {step === 'capture' && (
-        <>
-          <CameraCapture onCapture={handleCapture} />
-          <div className="shrink-0 px-4 pb-8 pt-3 flex flex-col items-center gap-2">
-            <div className="w-16 h-16 rounded-full border-4 border-white/20 bg-white/10 flex items-center justify-center">
-              <span className="w-10 h-10 rounded-full bg-white/25" />
-            </div>
-            <p className="text-zinc-600 text-xs text-center">Tap the viewfinder to capture</p>
-          </div>
-        </>
+        <CameraCapture onCapture={handleCapture} />
       )}
 
       {/* ── PROCESSING / ANALYZING / SUBMITTING ─────────────────────────── */}

@@ -74,37 +74,44 @@ export function CameraCapture({ onCapture }: Props) {
   }
 
   return (
-    <div className="flex-1 mx-4 my-2 rounded-2xl overflow-hidden bg-black relative">
-      {/* Live viewfinder */}
-      <video
-        ref={videoRef}
-        autoPlay
-        playsInline
-        muted
-        onCanPlay={() => setReady(true)}
-        className="absolute inset-0 w-full h-full object-cover"
-      />
+    <div className="flex-1 flex flex-col">
+      {/* Viewfinder */}
+      <div className="flex-1 mx-4 mt-2 rounded-2xl overflow-hidden bg-black relative">
+        <video
+          ref={videoRef}
+          autoPlay
+          playsInline
+          muted
+          onCanPlay={() => setReady(true)}
+          className="absolute inset-0 w-full h-full object-cover"
+        />
 
-      {/* Corner guides */}
-      {['top-3 left-3 border-t-2 border-l-2 rounded-tl', 'top-3 right-3 border-t-2 border-r-2 rounded-tr',
-        'bottom-3 left-3 border-b-2 border-l-2 rounded-bl', 'bottom-3 right-3 border-b-2 border-r-2 rounded-br',
-      ].map((cls, i) => (
-        <span key={i} className={`absolute ${cls} w-6 h-6 border-white/60`} />
-      ))}
+        {/* Corner guides */}
+        {['top-3 left-3 border-t-2 border-l-2 rounded-tl', 'top-3 right-3 border-t-2 border-r-2 rounded-tr',
+          'bottom-3 left-3 border-b-2 border-l-2 rounded-bl', 'bottom-3 right-3 border-b-2 border-r-2 rounded-br',
+        ].map((cls, i) => (
+          <span key={i} className={`absolute ${cls} w-6 h-6 border-white/60`} />
+        ))}
 
-      {/* Tap-to-capture overlay */}
-      <button
-        onClick={handleCapture}
-        disabled={!ready}
-        className="absolute inset-0 w-full h-full cursor-pointer disabled:cursor-not-allowed"
-        aria-label="Tap to capture photo"
-      />
+        {!ready && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/60">
+            <Camera className="w-10 h-10 text-zinc-500 animate-pulse" />
+          </div>
+        )}
+      </div>
 
-      {!ready && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/60">
-          <Camera className="w-10 h-10 text-zinc-500 animate-pulse" />
-        </div>
-      )}
+      {/* Shutter bar */}
+      <div className="shrink-0 px-4 pb-8 pt-4 flex flex-col items-center gap-2">
+        <button
+          onClick={handleCapture}
+          disabled={!ready}
+          className="w-16 h-16 rounded-full border-4 border-white/40 bg-white/15 flex items-center justify-center active:scale-95 transition-transform disabled:opacity-40 disabled:cursor-not-allowed"
+          aria-label="Take photo"
+        >
+          <span className="w-10 h-10 rounded-full bg-white/60" />
+        </button>
+        <p className="text-zinc-600 text-xs">Tap button or anywhere on viewfinder</p>
+      </div>
     </div>
   )
 }
