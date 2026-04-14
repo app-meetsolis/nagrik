@@ -1,5 +1,6 @@
 import { isAuthority } from '@/lib/clerk'
 import { redirect } from 'next/navigation'
+import { Sidebar } from './dashboard/Sidebar'
 
 export default async function AuthorityLayout({
   children,
@@ -10,8 +11,11 @@ export default async function AuthorityLayout({
   if (!ok) redirect('/')
 
   return (
-    <div className="flex flex-col min-h-screen bg-zinc-950 text-white">
-      {children}
+    <div className="flex h-screen bg-zinc-950 text-white overflow-hidden">
+      <Sidebar />
+      <main className="flex-1 overflow-y-auto">
+        {children}
+      </main>
     </div>
   )
 }
