@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Loader2, PlayCircle, Upload } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { markInProgress } from '@/actions/issue'
+import { ResolveDialog } from './ResolveDialog'
 
 interface Props {
   issueId: string
@@ -12,7 +13,8 @@ interface Props {
 }
 
 export function IssueActions({ issueId, status }: Props) {
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading]         = useState(false)
+  const [dialogOpen, setDialogOpen]   = useState(false)
   const router = useRouter()
 
   async function handleMarkInProgress() {
@@ -32,7 +34,7 @@ export function IssueActions({ issueId, status }: Props) {
       >
         {loading
           ? <Loader2 className="w-3 h-3 animate-spin" />
-          : <><PlayCircle className="w-3 h-3 mr-1" /> Start Working</>
+          : <><PlayCircle className="w-3 h-3 mr-1" />Start Working</>
         }
       </Button>
     )
@@ -40,13 +42,21 @@ export function IssueActions({ issueId, status }: Props) {
 
   if (status === 'in_progress') {
     return (
-      <Button
-        size="sm"
-        disabled
-        className="bg-orange-500/15 text-orange-400 border border-orange-500/20 rounded-lg h-8 text-xs opacity-70 cursor-not-allowed"
-      >
-        <Upload className="w-3 h-3 mr-1" /> Upload Resolution
-      </Button>
+      <>
+        <Button
+          size="sm"
+          onClick={() => setDialogOpen(true)}
+          className="bg-orange-500/15 text-orange-400 hover:bg-orange-500/25 border border-orange-500/20 rounded-lg h-8 text-xs"
+        >
+          <Upload className="w-3 h-3 mr-1" />Upload Resolution
+        </Button>
+
+        <ResolveDialog
+          issueId={issueId}
+          open={dialogOpen}
+          onClose={() => setDialogOpen(false)}
+        />
+      </>
     )
   }
 
