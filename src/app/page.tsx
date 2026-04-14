@@ -46,14 +46,24 @@ export default async function LandingPage() {
             </Button>
           </SignUpButton>
 
-          <Link href="/map" className="w-full">
-            <Button
-              variant="outline"
-              className="w-full h-12 border-zinc-700 text-zinc-300 hover:bg-zinc-800 hover:text-white rounded-xl"
-            >
-              View Ward Map
-            </Button>
-          </Link>
+          <div className="flex gap-3 w-full">
+            <Link href="/map" className="flex-1">
+              <Button
+                variant="outline"
+                className="w-full h-12 border-zinc-700 text-zinc-300 hover:bg-zinc-800 hover:text-white rounded-xl"
+              >
+                Ward Map
+              </Button>
+            </Link>
+            <Link href="/leaderboard" className="flex-1">
+              <Button
+                variant="outline"
+                className="w-full h-12 border-zinc-700 text-zinc-300 hover:bg-zinc-800 hover:text-white rounded-xl"
+              >
+                Leaderboard
+              </Button>
+            </Link>
+          </div>
         </div>
       </main>
 
