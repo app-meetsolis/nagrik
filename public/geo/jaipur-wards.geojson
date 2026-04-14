@@ -1,0 +1,105 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": { "id": "ward_1", "name": "Vaishali Nagar" },
+      "geometry": { "type": "Polygon", "coordinates": [[[75.7223,26.8944],[75.7583,26.8944],[75.7583,26.9304],[75.7223,26.9304],[75.7223,26.8944]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "id": "ward_2", "name": "Mansarovar" },
+      "geometry": { "type": "Polygon", "coordinates": [[[75.7358,26.8368],[75.7718,26.8368],[75.7718,26.8728],[75.7358,26.8728],[75.7358,26.8368]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "id": "ward_3", "name": "Malviya Nagar" },
+      "geometry": { "type": "Polygon", "coordinates": [[[75.7840,26.8434],[75.8200,26.8434],[75.8200,26.8794],[75.7840,26.8794],[75.7840,26.8434]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "id": "ward_4", "name": "Jagatpura" },
+      "geometry": { "type": "Polygon", "coordinates": [[[75.8442,26.8014],[75.8802,26.8014],[75.8802,26.8374],[75.8442,26.8374],[75.8442,26.8014]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "id": "ward_5", "name": "Sanganer" },
+      "geometry": { "type": "Polygon", "coordinates": [[[75.7775,26.7905],[75.8135,26.7905],[75.8135,26.8265],[75.7775,26.8265],[75.7775,26.7905]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "id": "ward_6", "name": "Sodala" },
+      "geometry": { "type": "Polygon", "coordinates": [[[75.7514,26.9050],[75.7874,26.9050],[75.7874,26.9410],[75.7514,26.9410],[75.7514,26.9050]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "id": "ward_7", "name": "Civil Lines" },
+      "geometry": { "type": "Polygon", "coordinates": [[[75.7712,26.8921],[75.8072,26.8921],[75.8072,26.9281],[75.7712,26.9281],[75.7712,26.8921]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "id": "ward_8", "name": "Walled City" },
+      "geometry": { "type": "Polygon", "coordinates": [[[75.8087,26.9059],[75.8447,26.9059],[75.8447,26.9419],[75.8087,26.9419],[75.8087,26.9059]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "id": "ward_9", "name": "Sindhi Camp" },
+      "geometry": { "type": "Polygon", "coordinates": [[[75.7833,26.8882],[75.8193,26.8882],[75.8193,26.9242],[75.7833,26.9242],[75.7833,26.8882]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "id": "ward_10", "name": "Raja Park" },
+      "geometry": { "type": "Polygon", "coordinates": [[[75.8053,26.8883],[75.8413,26.8883],[75.8413,26.9243],[75.8053,26.9243],[75.8053,26.8883]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "id": "ward_11", "name": "Bani Park" },
+      "geometry": { "type": "Polygon", "coordinates": [[[75.7883,26.9034],[75.8243,26.9034],[75.8243,26.9394],[75.7883,26.9394],[75.7883,26.9034]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "id": "ward_12", "name": "C-Scheme" },
+      "geometry": { "type": "Polygon", "coordinates": [[[75.7902,26.8776],[75.8262,26.8776],[75.8262,26.9136],[75.7902,26.9136],[75.7902,26.8776]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "id": "ward_13", "name": "Tonk Road" },
+      "geometry": { "type": "Polygon", "coordinates": [[[75.7802,26.8414],[75.8162,26.8414],[75.8162,26.8774],[75.7802,26.8774],[75.7802,26.8414]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "id": "ward_14", "name": "Ajmer Road" },
+      "geometry": { "type": "Polygon", "coordinates": [[[75.7204,26.8860],[75.7564,26.8860],[75.7564,26.9220],[75.7204,26.9220],[75.7204,26.8860]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "id": "ward_15", "name": "Amber" },
+      "geometry": { "type": "Polygon", "coordinates": [[[75.8348,26.9695],[75.8708,26.9695],[75.8708,27.0055],[75.8348,27.0055],[75.8348,26.9695]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "id": "ward_16", "name": "Kanota" },
+      "geometry": { "type": "Polygon", "coordinates": [[[75.8994,26.8766],[75.9354,26.8766],[75.9354,26.9126],[75.8994,26.9126],[75.8994,26.8766]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "id": "ward_17", "name": "Murlipura" },
+      "geometry": { "type": "Polygon", "coordinates": [[[75.7519,26.9418],[75.7879,26.9418],[75.7879,26.9778],[75.7519,26.9778],[75.7519,26.9418]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "id": "ward_18", "name": "Shastri Nagar" },
+      "geometry": { "type": "Polygon", "coordinates": [[[75.7921,26.9218],[75.8281,26.9218],[75.8281,26.9578],[75.7921,26.9578],[75.7921,26.9218]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "id": "ward_19", "name": "Gopalpura" },
+      "geometry": { "type": "Polygon", "coordinates": [[[75.7532,26.8551],[75.7892,26.8551],[75.7892,26.8911],[75.7532,26.8911],[75.7532,26.8551]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "id": "ward_20", "name": "Jhotwara" },
+      "geometry": { "type": "Polygon", "coordinates": [[[75.7178,26.9449],[75.7538,26.9449],[75.7538,26.9809],[75.7178,26.9809],[75.7178,26.9449]]] }
+    }
+  ]
+}
