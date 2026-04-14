@@ -1,11 +1,8 @@
-import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 import { createServiceClient } from '@/lib/supabase/server'
+import { WardMapLoader } from './WardMapLoader'
 import type { WardScore } from './WardMap'
-
-// Leaflet must not SSR
-const WardMap = dynamic(() => import('./WardMap'), { ssr: false })
 
 export default async function MapPage() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -56,7 +53,7 @@ export default async function MapPage() {
 
       {/* Map fills remaining height */}
       <div className="flex-1 relative">
-        <WardMap scoreMap={scoreMap} />
+        <WardMapLoader scoreMap={scoreMap} />
       </div>
 
     </div>
