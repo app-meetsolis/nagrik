@@ -132,7 +132,7 @@ export default function ReportFlow({ firstName }: Props) {
   )
 
   return (
-    <div className="flex flex-col h-full overflow-hidden">
+    <div className="flex flex-col h-[100dvh] overflow-hidden">
 
       {/* Top bar — hidden on success screen */}
       {step !== 'success' && (
@@ -183,7 +183,7 @@ export default function ReportFlow({ firstName }: Props) {
               </div>
             )}
           </div>
-          <div className="shrink-0 px-4 pb-8 pt-3 flex flex-col gap-3">
+          <div className="shrink-0 px-4 pb-20 pt-3 flex flex-col gap-3">
             <Button onClick={handleAnalyze} className="w-full h-12 bg-orange-500 hover:bg-orange-400 text-white font-semibold rounded-xl">
               Analyze Issue
             </Button>
@@ -245,7 +245,7 @@ export default function ReportFlow({ firstName }: Props) {
               )}
             </div>
 
-            <div className="shrink-0 px-4 pb-8 pt-1 flex flex-col gap-3">
+            <div className="shrink-0 px-4 pb-20 pt-1 flex flex-col gap-3">
               {aiResult.isValidCivicIssue && (
                 <Button onClick={handleSubmit} className="w-full h-12 bg-orange-500 hover:bg-orange-400 text-white font-semibold rounded-xl">
                   Submit Report
@@ -265,7 +265,7 @@ export default function ReportFlow({ firstName }: Props) {
         const sev = SEVERITY_CONFIG[aiResult.severity]
         const ref = submitted.issueId.slice(0, 8).toUpperCase()
         return (
-          <div className="flex-1 flex flex-col items-center justify-center px-6 text-center gap-6">
+          <div className="flex-1 flex flex-col items-center justify-center px-6 pb-16 text-center gap-6">
             {/* Icon */}
             <div className="w-20 h-20 rounded-full bg-green-500/15 border border-green-500/30 flex items-center justify-center">
               <CheckCircle2 className="w-10 h-10 text-green-400" />

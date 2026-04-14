@@ -16,7 +16,7 @@ export function CitizenNav() {
 
   return (
     <nav
-      className="shrink-0 bg-zinc-950 border-t border-zinc-800"
+      className="fixed bottom-0 left-0 right-0 z-50 bg-zinc-950 border-t border-zinc-800"
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
       <div className="flex items-center h-14">

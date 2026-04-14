@@ -74,7 +74,7 @@ export default async function MyReportsPage() {
   const resolved   = list.filter(i => i.status === 'resolved').length
 
   return (
-    <div className="flex flex-col min-h-full">
+    <div className="flex flex-col min-h-screen">
 
       {/* Header */}
       <header className="px-4 pt-5 pb-4 border-b border-zinc-800 shrink-0">
@@ -102,7 +102,7 @@ export default async function MyReportsPage() {
       </header>
 
       {/* List */}
-      <main className="flex-1 px-4 py-4 flex flex-col gap-3">
+      <main className="flex-1 px-4 py-4 pb-20 flex flex-col gap-3">
         {list.length === 0 ? (
           <div className="flex-1 flex flex-col items-center justify-center gap-4 py-20 text-center">
             <AlertCircle className="w-12 h-12 text-zinc-700" />
