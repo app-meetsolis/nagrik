@@ -141,7 +141,12 @@ export default function ReportFlow({ firstName }: Props) {
             <p className="text-xs text-zinc-500">Welcome back</p>
             <p className="text-sm font-semibold text-white">{firstName}</p>
           </div>
-          {wardPill}
+          <div className="flex items-center gap-3">
+            <Link href="/my-reports" className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors">
+              My Reports
+            </Link>
+            {wardPill}
+          </div>
         </header>
       )}
 
@@ -305,11 +310,18 @@ export default function ReportFlow({ firstName }: Props) {
               <Button onClick={reset} className="w-full h-12 bg-orange-500 hover:bg-orange-400 text-white font-semibold rounded-xl">
                 Report Another Issue
               </Button>
-              <Link href="/map" className="w-full">
-                <Button variant="outline" className="w-full h-12 border-zinc-700 text-zinc-300 hover:bg-zinc-800 rounded-xl">
-                  View Ward Map <ChevronRight className="w-4 h-4 ml-1" />
-                </Button>
-              </Link>
+              <div className="flex gap-3 w-full">
+                <Link href="/my-reports" className="flex-1">
+                  <Button variant="outline" className="w-full h-11 border-zinc-700 text-zinc-300 hover:bg-zinc-800 rounded-xl text-sm">
+                    My Reports
+                  </Button>
+                </Link>
+                <Link href="/map" className="flex-1">
+                  <Button variant="outline" className="w-full h-11 border-zinc-700 text-zinc-300 hover:bg-zinc-800 rounded-xl text-sm">
+                    Ward Map
+                  </Button>
+                </Link>
+              </div>
             </div>
           </div>
         )
