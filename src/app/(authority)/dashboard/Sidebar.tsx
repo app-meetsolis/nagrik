@@ -3,12 +3,13 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { SignOutButton } from '@clerk/nextjs'
-import { LayoutDashboard, Map, Trophy, LogOut } from 'lucide-react'
+import { LayoutDashboard, Map, Trophy, LogOut, Camera } from 'lucide-react'
 
 const NAV = [
-  { href: '/dashboard',   label: 'Dashboard',  icon: LayoutDashboard },
-  { href: '/map',         label: 'Ward Map',   icon: Map             },
-  { href: '/leaderboard', label: 'Leaderboard',icon: Trophy          },
+  { href: '/dashboard',   label: 'Dashboard',    icon: LayoutDashboard },
+  { href: '/report',      label: 'Report Issue', icon: Camera          },
+  { href: '/map',         label: 'Ward Map',     icon: Map             },
+  { href: '/leaderboard', label: 'Leaderboard',  icon: Trophy          },
 ]
 
 export function Sidebar() {

@@ -1,7 +1,7 @@
 import { auth } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Clock, CheckCircle2, Loader2, AlertCircle } from 'lucide-react'
+import { Clock, CheckCircle2, Loader2, AlertCircle } from 'lucide-react'
 import { createServiceClient } from '@/lib/supabase/server'
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
@@ -74,17 +74,12 @@ export default async function MyReportsPage() {
   const resolved   = list.filter(i => i.status === 'resolved').length
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-full">
 
       {/* Header */}
       <header className="px-4 pt-5 pb-4 border-b border-zinc-800 shrink-0">
-        <div className="flex items-center gap-3 mb-4">
-          <Link href="/report" className="flex items-center gap-1.5 text-zinc-400 hover:text-white text-sm transition-colors">
-            <ArrowLeft className="w-4 h-4" />
-            Report
-          </Link>
-          <div className="h-4 w-px bg-zinc-700" />
-          <h1 className="text-white font-semibold text-sm">My Reports</h1>
+        <div className="mb-4">
+          <h1 className="text-white font-semibold text-base">My Reports</h1>
         </div>
 
         {/* Stats strip */}

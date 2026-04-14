@@ -132,7 +132,7 @@ export default function ReportFlow({ firstName }: Props) {
   )
 
   return (
-    <div className="flex flex-col h-[100dvh] overflow-hidden">
+    <div className="flex flex-col h-full overflow-hidden">
 
       {/* Top bar — hidden on success screen */}
       {step !== 'success' && (
