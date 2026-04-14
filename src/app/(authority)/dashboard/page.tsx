@@ -2,6 +2,7 @@ import { auth } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
 import { createServiceClient } from '@/lib/supabase/server'
 import { AutoRefresh } from './AutoRefresh'
+import { IssueActions } from './IssueActions'
 import { Badge } from '@/components/ui/badge'
 import { MapPin, Clock, RefreshCw } from 'lucide-react'
 
@@ -181,9 +182,12 @@ export default async function DashboardPage() {
                   </span>
                 </div>
 
-                <div className="flex items-center gap-1 text-zinc-600 mt-1">
-                  <Clock className="w-3 h-3" />
-                  <span className="text-xs">{timeAgo(issue.created_at)}</span>
+                <div className="flex items-center justify-between mt-1.5">
+                  <div className="flex items-center gap-1 text-zinc-600">
+                    <Clock className="w-3 h-3" />
+                    <span className="text-xs">{timeAgo(issue.created_at)}</span>
+                  </div>
+                  <IssueActions issueId={issue.id} status={issue.status} />
                 </div>
               </div>
             </div>
