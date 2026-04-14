@@ -4,10 +4,41 @@ import Link from 'next/link'
 import { SignInButton, SignUpButton } from '@clerk/nextjs'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { createServiceClient } from '@/lib/supabase/server'
+
+async function fetchStats() {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const db = createServiceClient() as any
+
+    const [{ count: totalIssues }, { count: resolved }, { data: wards }] = await Promise.all([
+      db.from('issues').select('*', { count: 'exact', head: true }),
+      db.from('issues').select('*', { count: 'exact', head: true }).eq('status', 'resolved'),
+      db.from('wards').select('score'),
+    ])
+
+    const avgScore = wards?.length
+      ? Math.round((wards as { score: number }[]).reduce((s: number, w: { score: number }) => s + w.score, 0) / wards.length)
+      : 0
+
+    return {
+      totalIssues: totalIssues ?? 0,
+      resolved:    resolved    ?? 0,
+      avgScore,
+    }
+  } catch {
+    return { totalIssues: 0, resolved: 0, avgScore: 0 }
+  }
+}
 
 export default async function LandingPage() {
   const { userId } = await auth()
   if (userId) redirect('/report')
+
+  const stats = await fetchStats()
+  const resolutionRate = stats.totalIssues > 0
+    ? Math.round((stats.resolved / stats.totalIssues) * 100)
+    : 0
 
   return (
     <div className="flex flex-col min-h-screen bg-zinc-950 text-white">
@@ -67,20 +98,20 @@ export default async function LandingPage() {
         </div>
       </main>
 
-      {/* Stats strip */}
+      {/* Live stats strip */}
       <footer className="border-t border-zinc-800 px-6 py-5">
         <div className="flex justify-around text-center">
           <div>
-            <p className="text-xl font-bold text-white">20</p>
-            <p className="text-xs text-zinc-500">Wards tracked</p>
+            <p className="text-xl font-bold text-white">{stats.totalIssues}</p>
+            <p className="text-xs text-zinc-500">Issues filed</p>
           </div>
           <div>
-            <p className="text-xl font-bold text-orange-400">Live</p>
-            <p className="text-xs text-zinc-500">AI scoring</p>
+            <p className="text-xl font-bold text-green-400">{resolutionRate}%</p>
+            <p className="text-xs text-zinc-500">Resolved</p>
           </div>
           <div>
-            <p className="text-xl font-bold text-white">0s</p>
-            <p className="text-xs text-zinc-500">Response SLA</p>
+            <p className="text-xl font-bold text-orange-400">{stats.avgScore}</p>
+            <p className="text-xs text-zinc-500">Avg ward score</p>
           </div>
         </div>
       </footer>
