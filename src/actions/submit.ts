@@ -2,6 +2,7 @@
 
 import { auth } from '@clerk/nextjs/server'
 import { createServiceClient } from '@/lib/supabase/server'
+import { SUBMIT_WARD_DELTA, clampScore } from '@/lib/score'
 import type { ActionResult, SubmitIssueData } from '@/types/actions'
 import type { IssueCategory, IssueSeverity } from '@/types/database'
 
@@ -76,6 +77,21 @@ export async function submitIssue(
 
   if (issueErr || !issue) {
     return { success: false, error: issueErr?.message ?? 'Failed to submit issue', code: 'INSERT' }
+  }
+
+  // 4. Degrade ward score — new issue means the ward is in worse shape
+  if (input.wardId) {
+    const { data: ward } = await db
+      .from('wards')
+      .select('score')
+      .eq('id', input.wardId)
+      .single() as { data: { score: number } | null; error: unknown }
+
+    if (ward) {
+      const delta        = SUBMIT_WARD_DELTA[input.severity] ?? -2
+      const newWardScore = clampScore(ward.score + delta)
+      await db.from('wards').update({ score: newWardScore }).eq('id', input.wardId)
+    }
   }
 
   return {

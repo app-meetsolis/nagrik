@@ -2,14 +2,8 @@
 
 import { auth } from '@clerk/nextjs/server'
 import { createServiceClient } from '@/lib/supabase/server'
+import { AUTHORITY_SCORE_DELTA, RESOLVE_WARD_DELTA, clampScore } from '@/lib/score'
 import type { ActionResult, ResolveIssueData } from '@/types/actions'
-
-// Score reward per severity level
-const SCORE_DELTA: Record<string, number> = {
-  minor:    5,
-  moderate: 10,
-  critical: 15,
-}
 
 /**
  * Resolves an in_progress issue:
@@ -44,13 +38,13 @@ export async function resolveIssue(
 
   if (!authority) return { success: false, error: 'Authority record not found', code: 'NOT_AUTHORITY' }
 
-  // 2. Fetch the issue (verify ownership + get severity)
+  // 2. Fetch the issue (verify ownership + get severity + ward)
   const { data: issue } = await db
     .from('issues')
-    .select('id, ai_severity, status')
+    .select('id, ai_severity, status, ward_id')
     .eq('id', issueId)
     .eq('authority_id', authority.id)
-    .single() as { data: { id: string; ai_severity: string; status: string } | null; error: unknown }
+    .single() as { data: { id: string; ai_severity: string; status: string; ward_id: string | null } | null; error: unknown }
 
   if (!issue) return { success: false, error: 'Issue not found or not assigned to you', code: 'NOT_FOUND' }
   if (issue.status === 'resolved') return { success: false, error: 'Issue already resolved', code: 'ALREADY_RESOLVED' }
@@ -78,8 +72,8 @@ export async function resolveIssue(
     .eq('id', issueId)
 
   // 5. Update authority score + resolution_count
-  const delta    = SCORE_DELTA[issue.ai_severity] ?? 10
-  const newScore = Math.min(100, authority.score + delta)
+  const authDelta = AUTHORITY_SCORE_DELTA[issue.ai_severity] ?? 10
+  const newScore  = clampScore(authority.score + authDelta)
 
   await db
     .from('authorities')
@@ -96,8 +90,23 @@ export async function resolveIssue(
       issue_id:     issueId,
       authority_id: authority.id,
       event_type:   'resolution',
-      score_delta:  delta,
+      score_delta:  authDelta,
     })
+
+  // 7. Update ward score (ward recovers when issue is resolved)
+  if (issue.ward_id) {
+    const { data: ward } = await db
+      .from('wards')
+      .select('score')
+      .eq('id', issue.ward_id)
+      .single() as { data: { score: number } | null; error: unknown }
+
+    if (ward) {
+      const wardDelta    = RESOLVE_WARD_DELTA[issue.ai_severity] ?? 2
+      const newWardScore = clampScore(ward.score + wardDelta)
+      await db.from('wards').update({ score: newWardScore }).eq('id', issue.ward_id)
+    }
+  }
 
   return { success: true, data: { issueId, newScore } }
 }
