@@ -1,6 +1,5 @@
-import Link from 'next/link'
-import { ArrowLeft } from 'lucide-react'
 import { createServiceClient } from '@/lib/supabase/server'
+import { PublicNav } from '@/components/PublicNav'
 import { MapPageClient } from './MapPageClient'
 import type { WardScore } from './WardMap'
 
@@ -22,20 +21,9 @@ export default async function MapPage() {
   }
 
   return (
-    <div className="h-screen bg-zinc-950 flex flex-col overflow-hidden">
+    <div className="h-[100dvh] bg-zinc-950 flex flex-col overflow-hidden">
 
-      {/* Header */}
-      <header className="flex items-center gap-3 px-4 py-3 border-b border-zinc-800 shrink-0">
-        <Link
-          href="/"
-          className="flex items-center gap-1.5 text-zinc-400 hover:text-white text-sm transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back
-        </Link>
-        <div className="h-4 w-px bg-zinc-700" />
-        <h1 className="text-white font-semibold text-sm">Jaipur Ward Health Map</h1>
-      </header>
+      <PublicNav />
 
       {/* Client section (map + toggle + cards) */}
       <div className="flex-1 flex flex-col overflow-hidden">

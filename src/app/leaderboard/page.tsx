@@ -1,6 +1,6 @@
-import Link from 'next/link'
-import { ArrowLeft, MapPin, CheckCircle2, Trophy } from 'lucide-react'
+import { MapPin, CheckCircle2, Trophy } from 'lucide-react'
 import { createServiceClient } from '@/lib/supabase/server'
+import { PublicNav } from '@/components/PublicNav'
 
 const MEDAL = ['🥇', '🥈', '🥉']
 
@@ -64,21 +64,9 @@ export default async function LeaderboardPage() {
   return (
     <div className="min-h-screen bg-zinc-950 flex flex-col">
 
-      {/* ── Header ─────────────────────────────────────────────────── */}
-      <header className="flex items-center gap-3 px-4 py-3 border-b border-zinc-800 shrink-0">
-        <Link
-          href="/"
-          className="flex items-center gap-1.5 text-zinc-400 hover:text-white text-sm transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back
-        </Link>
-        <div className="h-4 w-px bg-zinc-700" />
-        <Trophy className="w-4 h-4 text-orange-400" />
-        <h1 className="text-white font-semibold text-sm">Authority Leaderboard</h1>
-      </header>
+      <PublicNav />
 
-      <main className="flex-1 px-4 pt-5 pb-10 flex flex-col gap-6">
+      <main className="flex-1 px-4 pt-5 pb-20 flex flex-col gap-6">
 
         {/* ── Podium — Top 3 ─────────────────────────────────────────── */}
         {top3.length > 0 && (
