@@ -75,7 +75,7 @@ export default function WardMap({ scoreMap }: Props) {
           <CircleMarker
             key={wardId}
             center={[lat, lng]}
-            radius={22}
+            radius={26}
             pathOptions={{
               fillColor:   color,
               fillOpacity: 0.85,
