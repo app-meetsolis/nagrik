@@ -30,7 +30,7 @@ export function IssueActions({ issueId, status }: Props) {
         size="sm"
         onClick={handleMarkInProgress}
         disabled={loading}
-        className="bg-blue-500/15 text-blue-400 hover:bg-blue-500/25 border border-blue-500/20 rounded-lg h-8 text-xs"
+        className="bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200 rounded-lg h-8 text-xs"
       >
         {loading
           ? <Loader2 className="w-3 h-3 animate-spin" />
@@ -46,7 +46,7 @@ export function IssueActions({ issueId, status }: Props) {
         <Button
           size="sm"
           onClick={() => setDialogOpen(true)}
-          className="bg-orange-500/15 text-orange-400 hover:bg-orange-500/25 border border-orange-500/20 rounded-lg h-8 text-xs"
+          className="bg-orange-50 text-orange-600 hover:bg-orange-100 border border-orange-200 rounded-lg h-8 text-xs"
         >
           <Upload className="w-3 h-3 mr-1" />Upload Resolution
         </Button>

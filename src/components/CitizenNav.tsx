@@ -18,12 +18,12 @@ export function CitizenNav() {
   return (
     <>
       {/* ── DESKTOP: left sidebar (md+) ─────────────────────────────────── */}
-      <aside className="hidden md:flex fixed left-0 top-0 bottom-0 w-56 flex-col border-r border-zinc-800 bg-zinc-950 z-50">
+      <aside className="hidden md:flex fixed left-0 top-0 bottom-0 w-56 flex-col border-r border-slate-200 bg-white z-50">
 
         {/* Brand */}
-        <div className="px-5 py-5 border-b border-zinc-800">
-          <span className="text-lg font-bold tracking-tight text-white">nagrik</span>
-          <p className="text-xs text-zinc-500 mt-0.5">Citizen Portal</p>
+        <div className="px-5 py-5 border-b border-slate-100">
+          <span className="text-lg font-bold tracking-tight text-slate-900">nagrik</span>
+          <p className="text-xs text-slate-400 mt-0.5">Citizen Portal</p>
         </div>
 
         {/* Nav links */}
@@ -36,8 +36,8 @@ export function CitizenNav() {
                 href={href}
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
                   active
-                    ? 'bg-orange-500/15 text-orange-400'
-                    : 'text-zinc-400 hover:bg-zinc-800 hover:text-white'
+                    ? 'bg-orange-50 text-orange-600'
+                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                 }`}
               >
                 <Icon className="w-4 h-4 shrink-0" />
@@ -48,9 +48,9 @@ export function CitizenNav() {
         </nav>
 
         {/* Sign out */}
-        <div className="px-3 py-4 border-t border-zinc-800">
+        <div className="px-3 py-4 border-t border-slate-100">
           <SignOutButton>
-            <button className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-zinc-500 hover:bg-zinc-800 hover:text-white transition-colors w-full">
+            <button className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:bg-slate-50 hover:text-slate-700 transition-colors w-full">
               <LogOut className="w-4 h-4 shrink-0" />
               Sign Out
             </button>
@@ -77,7 +77,7 @@ export function CitizenNav() {
 
         {/* Bottom bar */}
         <nav
-          className="bg-zinc-950 border-t border-zinc-800"
+          className="bg-white/95 backdrop-blur-sm border-t border-slate-200 shadow-[0_-1px_4px_rgba(0,0,0,0.06)]"
           style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
         >
           <div className="flex items-center h-14">
@@ -86,7 +86,7 @@ export function CitizenNav() {
             <Link
               href="/map"
               className={`flex-1 flex flex-col items-center justify-center gap-0.5 h-full transition-colors ${
-                path === '/map' ? 'text-orange-400' : 'text-zinc-500'
+                path === '/map' ? 'text-orange-500' : 'text-slate-400'
               }`}
             >
               <Map className="w-5 h-5" />
@@ -95,7 +95,7 @@ export function CitizenNav() {
             <Link
               href="/my-reports"
               className={`flex-1 flex flex-col items-center justify-center gap-0.5 h-full transition-colors ${
-                path === '/my-reports' ? 'text-orange-400' : 'text-zinc-500'
+                path === '/my-reports' ? 'text-orange-500' : 'text-slate-400'
               }`}
             >
               <ClipboardList className="w-5 h-5" />
@@ -109,14 +109,14 @@ export function CitizenNav() {
             <Link
               href="/leaderboard"
               className={`flex-1 flex flex-col items-center justify-center gap-0.5 h-full transition-colors ${
-                path === '/leaderboard' ? 'text-orange-400' : 'text-zinc-500'
+                path === '/leaderboard' ? 'text-orange-500' : 'text-slate-400'
               }`}
             >
               <Trophy className="w-5 h-5" />
               <span className="text-[10px] font-medium">Board</span>
             </Link>
             <SignOutButton>
-              <button className="flex-1 flex flex-col items-center justify-center gap-0.5 h-full text-zinc-500 hover:text-zinc-300 transition-colors">
+              <button className="flex-1 flex flex-col items-center justify-center gap-0.5 h-full text-slate-400 hover:text-slate-600 transition-colors">
                 <LogOut className="w-5 h-5" />
                 <span className="text-[10px] font-medium">Sign Out</span>
               </button>

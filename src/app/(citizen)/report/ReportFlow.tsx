@@ -131,8 +131,10 @@ export default function ReportFlow({ firstName }: Props) {
     </div>
   )
 
+  const isDark = ['capture', 'processing', 'analyzing', 'submitting'].includes(step)
+
   return (
-    <div className="flex flex-col h-[100dvh] overflow-hidden">
+    <div className={`flex flex-col h-[100dvh] overflow-hidden ${isDark ? 'bg-zinc-950 text-white' : 'bg-white text-slate-900'}`}>
 
       {/* Top bar — hidden on success screen */}
       {step !== 'success' && (
@@ -187,7 +189,7 @@ export default function ReportFlow({ firstName }: Props) {
             <Button onClick={handleAnalyze} className="w-full h-12 bg-orange-500 hover:bg-orange-400 text-white font-semibold rounded-xl">
               Analyze Issue
             </Button>
-            <Button variant="ghost" className="text-zinc-500 hover:text-white" onClick={reset}>
+            <Button variant="ghost" className="text-slate-500 hover:text-slate-900" onClick={reset}>
               <RotateCcw className="w-4 h-4 mr-2" /> Retake
             </Button>
           </div>
@@ -205,7 +207,7 @@ export default function ReportFlow({ firstName }: Props) {
               <img src={capture.dataUrl} alt="Issue" className="absolute inset-0 w-full h-full object-cover" />
             </div>
 
-            <div className="flex-1 mx-4 my-3 rounded-2xl bg-zinc-900 border border-zinc-800 p-5 flex flex-col gap-4 overflow-auto">
+            <div className="flex-1 mx-4 my-3 rounded-2xl bg-white border border-slate-200 p-5 flex flex-col gap-4 overflow-auto">
               {!aiResult.isValidCivicIssue ? (
                 <div className="flex flex-col items-center gap-3 py-4 text-center">
                   <AlertTriangle className="w-10 h-10 text-amber-400" />
@@ -219,7 +221,7 @@ export default function ReportFlow({ firstName }: Props) {
                 <>
                   <div>
                     <p className="text-xs text-zinc-500 uppercase tracking-widest mb-2">AI Detection</p>
-                    <div className={`flex items-center gap-3 p-4 rounded-xl border ${cat.ring} bg-zinc-950`}>
+                    <div className={`flex items-center gap-3 p-4 rounded-xl border ${cat.ring} bg-slate-50`}>
                       <span className="text-3xl">{cat.emoji}</span>
                       <div>
                         <p className={`text-lg font-bold ${cat.text}`}>{cat.label}</p>
@@ -238,7 +240,7 @@ export default function ReportFlow({ firstName }: Props) {
                       </div>
                     )}
                   </div>
-                  <Badge className="w-fit bg-zinc-800 text-zinc-400 border-zinc-700 text-xs">
+                  <Badge className="w-fit bg-orange-50 text-orange-600 border-orange-200 text-xs">
                     Ready to submit
                   </Badge>
                 </>
@@ -251,7 +253,7 @@ export default function ReportFlow({ firstName }: Props) {
                   Submit Report
                 </Button>
               )}
-              <Button variant="ghost" className="text-zinc-500 hover:text-white" onClick={reset}>
+              <Button variant="ghost" className="text-slate-500 hover:text-slate-900" onClick={reset}>
                 <RotateCcw className="w-4 h-4 mr-2" /> Retake
               </Button>
             </div>
@@ -267,57 +269,57 @@ export default function ReportFlow({ firstName }: Props) {
         return (
           <div className="flex-1 flex flex-col items-center justify-center px-6 pb-16 md:pb-0 text-center gap-6">
             {/* Icon */}
-            <div className="w-20 h-20 rounded-full bg-green-500/15 border border-green-500/30 flex items-center justify-center">
-              <CheckCircle2 className="w-10 h-10 text-green-400" />
+            <div className="w-24 h-24 rounded-full bg-green-50 border-2 border-green-200 flex items-center justify-center">
+              <CheckCircle2 className="w-10 h-10 text-green-500" />
             </div>
 
             {/* Headline */}
             <div className="flex flex-col gap-1">
-              <h2 className="text-2xl font-bold text-white">Report Submitted!</h2>
-              <p className="text-zinc-400 text-sm">Your issue has been logged and assigned</p>
+              <h2 className="text-2xl font-bold text-slate-900">Report Submitted!</h2>
+              <p className="text-slate-400 text-sm">Your issue has been logged and assigned</p>
             </div>
 
             {/* Details card */}
-            <div className="w-full bg-zinc-900 border border-zinc-800 rounded-2xl p-5 flex flex-col gap-3 text-left">
-              <div className="flex justify-between items-center pb-3 border-b border-zinc-800">
-                <span className="text-xs text-zinc-500 uppercase tracking-widest">Reference</span>
-                <span className="text-sm font-mono font-semibold text-white">#{ref}</span>
+            <div className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-5 flex flex-col gap-3 text-left">
+              <div className="flex justify-between items-center pb-3 border-b border-slate-200">
+                <span className="text-xs text-slate-400 uppercase tracking-widest">Reference</span>
+                <span className="text-sm font-mono font-semibold text-slate-900">#{ref}</span>
               </div>
 
               <div className="flex items-center justify-between">
-                <span className="text-sm text-zinc-400">Category</span>
-                <span className="text-sm font-medium text-white">{cat.emoji} {cat.label}</span>
+                <span className="text-sm text-slate-400">Category</span>
+                <span className="text-sm font-medium text-slate-900">{cat.emoji} {cat.label}</span>
               </div>
 
               <div className="flex items-center justify-between">
-                <span className="text-sm text-zinc-400">Severity</span>
+                <span className="text-sm text-slate-400">Severity</span>
                 <span className={`text-sm font-semibold ${sev.text}`}>{sev.label}</span>
               </div>
 
               <div className="flex items-center justify-between">
-                <span className="text-sm text-zinc-400">Ward</span>
-                <span className="text-sm font-medium text-white">{submitted.wardName}</span>
+                <span className="text-sm text-slate-400">Ward</span>
+                <span className="text-sm font-medium text-slate-900">{submitted.wardName}</span>
               </div>
 
               <div className="flex items-center justify-between">
-                <span className="text-sm text-zinc-400">Assigned to</span>
-                <span className="text-sm font-medium text-orange-400">{submitted.authorityName}</span>
+                <span className="text-sm text-slate-400">Assigned to</span>
+                <span className="text-sm font-medium text-orange-500">{submitted.authorityName}</span>
               </div>
             </div>
 
             {/* Actions */}
             <div className="w-full flex flex-col gap-3">
-              <Button onClick={reset} className="w-full h-12 bg-orange-500 hover:bg-orange-400 text-white font-semibold rounded-xl">
+              <Button onClick={reset} className="w-full h-12 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-xl">
                 Report Another Issue
               </Button>
               <div className="flex gap-3 w-full">
                 <Link href="/my-reports" className="flex-1">
-                  <Button variant="outline" className="w-full h-11 border-zinc-700 text-zinc-300 hover:bg-zinc-800 rounded-xl text-sm">
+                  <Button variant="outline" className="w-full h-11 border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl text-sm">
                     My Reports
                   </Button>
                 </Link>
                 <Link href="/map" className="flex-1">
-                  <Button variant="outline" className="w-full h-11 border-zinc-700 text-zinc-300 hover:bg-zinc-800 rounded-xl text-sm">
+                  <Button variant="outline" className="w-full h-11 border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl text-sm">
                     Ward Map
                   </Button>
                 </Link>

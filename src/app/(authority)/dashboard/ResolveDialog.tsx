@@ -53,20 +53,20 @@ export function ResolveDialog({ issueId, open, onClose }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={v => !v && handleClose()}>
-      <DialogContent className="bg-zinc-900 border-zinc-800 text-white max-w-sm mx-4">
+      <DialogContent className="bg-white border-slate-200 text-slate-900 max-w-sm mx-4">
 
         {/* ── Success state ────────────────────────────────────────── */}
         {newScore !== null ? (
           <div className="flex flex-col items-center gap-4 py-4 text-center">
-            <div className="w-16 h-16 rounded-full bg-green-500/15 border border-green-500/30 flex items-center justify-center">
-              <CheckCircle2 className="w-8 h-8 text-green-400" />
+            <div className="w-16 h-16 rounded-full bg-green-50 border-2 border-green-200 flex items-center justify-center">
+              <CheckCircle2 className="w-8 h-8 text-green-500" />
             </div>
             <div>
-              <p className="text-white font-bold text-lg">Issue Resolved!</p>
-              <p className="text-zinc-400 text-sm mt-1">Your new score</p>
-              <p className="text-orange-400 text-3xl font-bold mt-1">{newScore}</p>
+              <p className="text-slate-900 font-bold text-lg">Issue Resolved!</p>
+              <p className="text-slate-400 text-sm mt-1">Your new score</p>
+              <p className="text-orange-500 text-3xl font-bold mt-1">{newScore}</p>
             </div>
-            <Button onClick={handleClose} className="w-full bg-zinc-800 hover:bg-zinc-700 rounded-xl">
+            <Button onClick={handleClose} className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl">
               Back to Dashboard
             </Button>
           </div>
@@ -74,23 +74,23 @@ export function ResolveDialog({ issueId, open, onClose }: Props) {
           /* ── Upload form ───────────────────────────────────────── */
           <>
             <DialogHeader>
-              <DialogTitle className="text-white">Upload Resolution Photo</DialogTitle>
-              <p className="text-zinc-500 text-sm">Take a photo showing the issue has been fixed</p>
+              <DialogTitle className="text-slate-900">Upload Resolution Photo</DialogTitle>
+              <p className="text-slate-400 text-sm">Take a photo showing the issue has been fixed</p>
             </DialogHeader>
 
             {/* Drop zone / preview */}
             <div
               onClick={() => inputRef.current?.click()}
-              className="border-2 border-dashed border-zinc-700 rounded-xl overflow-hidden cursor-pointer hover:border-zinc-500 transition-colors"
+              className="border-2 border-dashed border-slate-300 rounded-xl overflow-hidden cursor-pointer hover:border-slate-400 transition-colors"
             >
               {preview ? (
                 /* eslint-disable-next-line @next/next/no-img-element */
                 <img src={preview} alt="Resolution preview" className="w-full h-44 object-cover" />
               ) : (
                 <div className="flex flex-col items-center gap-2 py-8">
-                  <Camera className="w-10 h-10 text-zinc-600" />
-                  <p className="text-zinc-400 text-sm font-medium">Tap to open camera or gallery</p>
-                  <p className="text-zinc-600 text-xs">Proof that the issue is fixed</p>
+                  <Camera className="w-10 h-10 text-slate-300" />
+                  <p className="text-slate-400 text-sm font-medium">Tap to open camera or gallery</p>
+                  <p className="text-slate-300 text-xs">Proof that the issue is fixed</p>
                 </div>
               )}
               <input
@@ -106,7 +106,7 @@ export function ResolveDialog({ issueId, open, onClose }: Props) {
             {preview && (
               <button
                 onClick={() => inputRef.current?.click()}
-                className="text-xs text-zinc-500 hover:text-zinc-300 text-center w-full -mt-1"
+                className="text-xs text-slate-400 hover:text-slate-600 text-center w-full -mt-1"
               >
                 Tap to retake
               </button>
@@ -115,14 +115,14 @@ export function ResolveDialog({ issueId, open, onClose }: Props) {
             <DialogFooter className="flex gap-2 mt-1">
               <Button
                 variant="ghost"
-                className="flex-1 text-zinc-500 hover:text-white"
+                className="flex-1 text-slate-400 hover:text-slate-700"
                 onClick={handleClose}
                 disabled={loading}
               >
                 Cancel
               </Button>
               <Button
-                className="flex-1 bg-orange-500 hover:bg-orange-400 text-white rounded-xl"
+                className="flex-1 bg-orange-500 hover:bg-orange-600 text-white rounded-xl"
                 onClick={handleSubmit}
                 disabled={!file || loading}
               >

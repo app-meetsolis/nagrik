@@ -46,12 +46,12 @@ export default async function LandingPage() {
     : 0
 
   return (
-    <div className="flex flex-col min-h-screen bg-zinc-950 text-white">
+    <div className="flex flex-col min-h-screen bg-white text-slate-900">
       {/* Header */}
       <header className="flex items-center justify-between px-6 py-4">
         <span className="text-xl font-bold tracking-tight">nagrik</span>
         <SignInButton mode="modal">
-          <Button variant="ghost" size="sm" className="text-zinc-400 hover:text-white">
+          <Button variant="ghost" size="sm" className="text-slate-500 hover:text-slate-900">
             Sign in
           </Button>
         </SignInButton>
@@ -59,26 +59,35 @@ export default async function LandingPage() {
 
       {/* Hero */}
       <main className="flex flex-1 flex-col items-center justify-center px-6 text-center gap-6">
-        <Badge className="bg-orange-500/15 text-orange-400 border-orange-500/20 text-xs tracking-widest uppercase">
+        <Badge className="bg-orange-50 text-orange-600 border-orange-200 text-xs tracking-widest uppercase">
           Jaipur Civic Platform
         </Badge>
 
         <h1 className="text-4xl sm:text-5xl font-bold tracking-tight leading-tight max-w-sm">
           Report issues.
           <br />
-          <span className="text-orange-400">Hold officials</span>
+          <span className="text-orange-500">Hold officials</span>
           <br />
           accountable.
         </h1>
 
-        <p className="text-zinc-400 text-base max-w-xs leading-relaxed">
+        <p className="text-slate-500 text-base max-w-xs leading-relaxed">
           Snap a photo. AI tags the category and ward. Your authority gets notified — and scored on their response.
         </p>
 
+        {/* Feature row — desktop only */}
+        <div className="hidden sm:flex items-center gap-8 text-slate-500 text-sm">
+          <span>📸 Snap a photo</span>
+          <span className="text-slate-200">|</span>
+          <span>🤖 AI categorizes</span>
+          <span className="text-slate-200">|</span>
+          <span>⚖️ Officials scored</span>
+        </div>
+
         <div className="flex flex-col gap-3 w-full max-w-xs mt-2">
           <SignUpButton mode="modal">
-            <Button className="w-full h-12 bg-orange-500 hover:bg-orange-400 text-white font-semibold text-base rounded-xl">
-              Report an Issue
+            <Button className="w-full h-12 bg-orange-500 hover:bg-orange-600 text-white font-semibold text-base rounded-xl">
+              Get Started — It&apos;s Free
             </Button>
           </SignUpButton>
 
@@ -86,7 +95,7 @@ export default async function LandingPage() {
             <Link href="/map" className="flex-1">
               <Button
                 variant="outline"
-                className="w-full h-12 border-zinc-700 text-zinc-300 hover:bg-zinc-800 hover:text-white rounded-xl"
+                className="w-full h-12 border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl"
               >
                 Ward Map
               </Button>
@@ -94,7 +103,7 @@ export default async function LandingPage() {
             <Link href="/leaderboard" className="flex-1">
               <Button
                 variant="outline"
-                className="w-full h-12 border-zinc-700 text-zinc-300 hover:bg-zinc-800 hover:text-white rounded-xl"
+                className="w-full h-12 border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl"
               >
                 Leaderboard
               </Button>
@@ -104,19 +113,19 @@ export default async function LandingPage() {
       </main>
 
       {/* Live stats strip */}
-      <footer className="border-t border-zinc-800 px-6 py-5">
+      <footer className="border-t border-slate-100 bg-slate-50 px-6 py-5">
         <div className="flex justify-around text-center">
           <div>
-            <p className="text-xl font-bold text-white">{stats.totalIssues}</p>
-            <p className="text-xs text-zinc-500">Issues filed</p>
+            <p className="text-xl font-bold text-slate-900">{stats.totalIssues}</p>
+            <p className="text-xs text-slate-400">Issues filed</p>
           </div>
           <div>
-            <p className="text-xl font-bold text-green-400">{resolutionRate}%</p>
-            <p className="text-xs text-zinc-500">Resolved</p>
+            <p className="text-xl font-bold text-green-600">{resolutionRate}%</p>
+            <p className="text-xs text-slate-400">Resolved</p>
           </div>
           <div>
-            <p className="text-xl font-bold text-orange-400">{stats.avgScore}</p>
-            <p className="text-xs text-zinc-500">Avg ward score</p>
+            <p className="text-xl font-bold text-orange-500">{stats.avgScore}</p>
+            <p className="text-xs text-slate-400">Avg ward score</p>
           </div>
         </div>
       </footer>

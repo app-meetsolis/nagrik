@@ -21,7 +21,7 @@ export default async function MapPage() {
   }
 
   return (
-    <div className="h-[100dvh] bg-zinc-950 flex flex-col overflow-hidden">
+    <div className="h-[100dvh] bg-white flex flex-col overflow-hidden">
 
       <PublicNav />
 

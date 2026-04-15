@@ -11,7 +11,7 @@ export default async function AuthorityLayout({
   if (!ok) redirect('/')
 
   return (
-    <div className="flex h-[100dvh] bg-zinc-950 text-white overflow-hidden">
+    <div className="flex h-[100dvh] bg-slate-50 text-slate-900 overflow-hidden">
       <Sidebar />
       <main className="flex-1 overflow-y-auto min-w-0">
         {children}

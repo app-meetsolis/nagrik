@@ -20,15 +20,15 @@ const CATEGORY_EMOJI: Record<string, string> = {
 }
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.FC<{ className?: string }> }> = {
-  pending:     { label: 'Pending',     color: 'text-zinc-400  bg-zinc-800',          icon: Clock        },
-  in_progress: { label: 'In Progress', color: 'text-blue-400  bg-blue-500/15',       icon: Loader2      },
-  resolved:    { label: 'Resolved',    color: 'text-green-400 bg-green-500/15',      icon: CheckCircle2 },
+  pending:     { label: 'Pending',     color: 'text-slate-600 bg-slate-100',   icon: Clock        },
+  in_progress: { label: 'In Progress', color: 'text-blue-600  bg-blue-50',     icon: Loader2      },
+  resolved:    { label: 'Resolved',    color: 'text-green-600 bg-green-50',    icon: CheckCircle2 },
 }
 
 const SEVERITY_COLOR: Record<string, string> = {
-  minor:    'text-green-400 bg-green-500/10',
-  moderate: 'text-amber-400 bg-amber-500/10',
-  critical: 'text-red-400   bg-red-500/10',
+  minor:    'text-green-700 bg-green-50',
+  moderate: 'text-amber-700 bg-amber-50',
+  critical: 'text-red-700   bg-red-50',
 }
 
 // ── Page ─────────────────────────────────────────────────────────────────────
@@ -77,25 +77,25 @@ export default async function MyReportsPage() {
     <div className="flex flex-col min-h-screen">
 
       {/* Header */}
-      <header className="px-4 pt-5 pb-4 border-b border-zinc-800 shrink-0">
+      <header className="px-4 pt-5 pb-4 border-b border-slate-100 shrink-0">
         <div className="mb-4">
-          <h1 className="text-white font-semibold text-base">My Reports</h1>
+          <h1 className="text-slate-900 font-semibold text-base">My Reports</h1>
         </div>
 
         {/* Stats strip */}
         {list.length > 0 && (
           <div className="flex gap-3">
-            <div className="flex-1 bg-zinc-900 rounded-xl p-2.5 text-center">
-              <p className="text-lg font-bold text-white">{list.length}</p>
-              <p className="text-xs text-zinc-500">Total</p>
+            <div className="flex-1 bg-slate-50 border border-slate-100 rounded-xl p-2.5 text-center">
+              <p className="text-lg font-bold text-slate-900">{list.length}</p>
+              <p className="text-xs text-slate-400">Total</p>
             </div>
-            <div className="flex-1 bg-zinc-900 rounded-xl p-2.5 text-center">
-              <p className="text-lg font-bold text-amber-400">{pending + inProgress}</p>
-              <p className="text-xs text-zinc-500">Active</p>
+            <div className="flex-1 bg-slate-50 border border-slate-100 rounded-xl p-2.5 text-center">
+              <p className="text-lg font-bold text-amber-600">{pending + inProgress}</p>
+              <p className="text-xs text-slate-400">Active</p>
             </div>
-            <div className="flex-1 bg-zinc-900 rounded-xl p-2.5 text-center">
-              <p className="text-lg font-bold text-green-400">{resolved}</p>
-              <p className="text-xs text-zinc-500">Resolved</p>
+            <div className="flex-1 bg-slate-50 border border-slate-100 rounded-xl p-2.5 text-center">
+              <p className="text-lg font-bold text-green-600">{resolved}</p>
+              <p className="text-xs text-slate-400">Resolved</p>
             </div>
           </div>
         )}
@@ -105,16 +105,16 @@ export default async function MyReportsPage() {
       <main className="flex-1 px-4 py-4 pb-20 md:pb-6 flex flex-col gap-3">
         {list.length === 0 ? (
           <div className="flex-1 flex flex-col items-center justify-center gap-4 py-20 text-center">
-            <AlertCircle className="w-12 h-12 text-zinc-700" />
+            <AlertCircle className="w-12 h-12 text-slate-200" />
             <div>
-              <p className="text-white font-semibold">No reports yet</p>
-              <p className="text-zinc-500 text-sm mt-1 max-w-xs">
+              <p className="text-slate-900 font-semibold">No reports yet</p>
+              <p className="text-slate-400 text-sm mt-1 max-w-xs">
                 Help improve your ward — report a civic issue and track its resolution.
               </p>
             </div>
             <Link
               href="/report"
-              className="mt-2 px-6 py-3 bg-orange-500 hover:bg-orange-400 text-white font-semibold rounded-xl text-sm transition-colors"
+              className="mt-2 px-6 py-3 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-xl text-sm transition-colors"
             >
               Report an Issue
             </Link>
@@ -128,10 +128,10 @@ export default async function MyReportsPage() {
             return (
               <div
                 key={issue.id}
-                className="flex gap-3 bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden"
+                className="flex gap-3 bg-white border border-slate-200 rounded-2xl overflow-hidden"
               >
                 {/* Photo */}
-                <div className="w-20 h-20 shrink-0 bg-zinc-800">
+                <div className="w-20 h-20 shrink-0 bg-slate-100">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={issue.photo_url} alt="Issue" className="w-full h-full object-cover" />
                 </div>
@@ -139,7 +139,7 @@ export default async function MyReportsPage() {
                 {/* Details */}
                 <div className="flex-1 py-2.5 pr-3 flex flex-col justify-between min-w-0">
                   <div className="flex items-start justify-between gap-2">
-                    <p className="text-sm font-semibold text-white capitalize truncate">
+                    <p className="text-sm font-semibold text-slate-900 capitalize truncate">
                       {CATEGORY_EMOJI[issue.ai_category]} {issue.ai_category}
                     </p>
                     <span className={`flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-medium shrink-0 ${status.color}`}>
@@ -148,13 +148,13 @@ export default async function MyReportsPage() {
                     </span>
                   </div>
 
-                  <p className="text-xs text-zinc-500 truncate">{ward}</p>
+                  <p className="text-xs text-slate-400 truncate">{ward}</p>
 
                   <div className="flex items-center justify-between mt-0.5">
                     <span className={`text-xs px-2 py-0.5 rounded-md font-medium ${SEVERITY_COLOR[issue.ai_severity] ?? ''}`}>
                       {issue.ai_severity}
                     </span>
-                    <div className="flex items-center gap-1 text-zinc-600">
+                    <div className="flex items-center gap-1 text-slate-400">
                       <Clock className="w-3 h-3" />
                       <span className="text-xs">{timeAgo(issue.created_at)}</span>
                     </div>

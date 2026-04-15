@@ -24,7 +24,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,   // prevents iOS zoom on input focus
-  themeColor: "#09090b",
+  themeColor: "#ffffff",
 };
 
 export default async function RootLayout({
