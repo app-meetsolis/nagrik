@@ -1,8 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
-import { auth } from "@clerk/nextjs/server";
-import { ConditionalCitizenNav } from "@/components/ConditionalCitizenNav";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -23,29 +21,23 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,   // prevents iOS zoom on input focus
+  maximumScale: 1,
   themeColor: "#ffffff",
 };
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const { userId, sessionClaims } = await auth();
-  const role = (sessionClaims?.metadata as { role?: string } | undefined)?.role;
-  // Citizens get a desktop sidebar → push content right on md+ screens
-  const isCitizen = !!userId && role !== "authority" && role !== "admin";
-
   return (
     <ClerkProvider>
       <html
         lang="en"
         className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
       >
-        <body className={`min-h-full flex flex-col${isCitizen ? " md:pl-56" : ""}`}>
+        <body className="min-h-full flex flex-col">
           {children}
-          <ConditionalCitizenNav />
         </body>
       </html>
     </ClerkProvider>

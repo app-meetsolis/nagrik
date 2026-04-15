@@ -6,6 +6,7 @@ import { SignInButton, SignUpButton } from '@clerk/nextjs'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { createServiceClient } from '@/lib/supabase/server'
+import { AuthRedirect } from '@/components/AuthRedirect'
 
 async function fetchStats() {
   try {
@@ -47,6 +48,9 @@ export default async function LandingPage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-white text-slate-900">
+      {/* Handles redirect after Clerk modal sign-in (client-side auth state change) */}
+      <AuthRedirect />
+
       {/* Header */}
       <header className="flex items-center justify-between px-6 py-4">
         <span className="text-xl font-bold tracking-tight">nagrik</span>
