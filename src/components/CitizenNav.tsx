@@ -2,10 +2,11 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Camera, Map, Trophy, ClipboardList, LogOut } from 'lucide-react'
+import { Camera, Map, Trophy, ClipboardList, LogOut, Home } from 'lucide-react'
 import { SignOutButton } from '@clerk/nextjs'
 
 const SIDEBAR_LINKS = [
+  { href: '/home',        label: 'Home',         icon: Home          },
   { href: '/report',      label: 'Report Issue', icon: Camera        },
   { href: '/map',         label: 'Ward Map',     icon: Map           },
   { href: '/leaderboard', label: 'Leaderboard',  icon: Trophy        },
@@ -18,7 +19,7 @@ export function CitizenNav() {
   return (
     <>
       {/* ── DESKTOP: left sidebar (md+) ─────────────────────────────────── */}
-      <aside className="hidden md:flex fixed left-0 top-0 bottom-0 w-56 flex-col border-r border-slate-200 bg-white z-50">
+      <aside className="hidden md:flex w-56 shrink-0 flex-col border-r border-slate-200 bg-white h-full">
 
         {/* Brand */}
         <div className="px-5 py-5 border-b border-slate-100">

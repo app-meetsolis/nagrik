@@ -19,7 +19,7 @@ export function AuthRedirect() {
   useEffect(() => {
     if (!isLoaded || !isSignedIn) return
     const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)
-    router.replace(isMobile ? '/report' : '/map')
+    router.replace(isMobile ? '/report' : '/home')
   }, [isLoaded, isSignedIn, router])
 
   return null

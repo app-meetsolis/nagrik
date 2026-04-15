@@ -1,6 +1,5 @@
-import { MapPin, CheckCircle2, Trophy } from 'lucide-react'
+import { MapPin, CheckCircle2 } from 'lucide-react'
 import { createServiceClient } from '@/lib/supabase/server'
-import { PublicNav } from '@/components/PublicNav'
 
 const MEDAL = ['🥇', '🥈', '🥉']
 
@@ -62,9 +61,7 @@ export default async function LeaderboardPage() {
   const rest = list.slice(3)
 
   return (
-    <div className="min-h-screen bg-white flex flex-col">
-
-      <PublicNav />
+    <div className="flex flex-col">
 
       <main className="flex-1 px-4 pt-5 pb-20 md:pb-8 flex flex-col gap-6">
 

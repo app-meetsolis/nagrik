@@ -38,7 +38,7 @@ export default async function LandingPage() {
   if (userId) {
     const ua = (await headers()).get('user-agent') ?? ''
     const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(ua)
-    redirect(isMobile ? '/report' : '/map')
+    redirect(isMobile ? '/report' : '/home')
   }
 
   const stats = await fetchStats()

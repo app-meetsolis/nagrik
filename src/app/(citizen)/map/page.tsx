@@ -1,5 +1,4 @@
 import { createServiceClient } from '@/lib/supabase/server'
-import { PublicNav } from '@/components/PublicNav'
 import { MapPageClient } from './MapPageClient'
 import type { WardScore } from './WardMap'
 
@@ -21,15 +20,8 @@ export default async function MapPage() {
   }
 
   return (
-    <div className="h-[100dvh] bg-white flex flex-col overflow-hidden">
-
-      <PublicNav />
-
-      {/* Client section (map + toggle + cards) */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <MapPageClient scoreMap={scoreMap} wards={wards ?? []} />
-      </div>
-
+    <div className="h-full flex flex-col overflow-hidden">
+      <MapPageClient scoreMap={scoreMap} wards={wards ?? []} />
     </div>
   )
 }
