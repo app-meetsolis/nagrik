@@ -45,7 +45,7 @@ export function MapPageClient({ scoreMap, wards }: Props) {
         <WardMapLoader scoreMap={scoreMap} />
 
         {/* Floating legend */}
-        <div className="absolute bottom-20 left-3 z-[1000] bg-zinc-900/90 backdrop-blur rounded-xl px-3 py-2 flex flex-col gap-1 border border-zinc-800">
+        <div className="absolute bottom-20 md:bottom-3 left-3 z-[1000] bg-zinc-900/90 backdrop-blur rounded-xl px-3 py-2 flex flex-col gap-1 border border-zinc-800">
           {LEGEND.map(({ color, label }) => (
             <span key={label} className="flex items-center gap-2 text-xs text-zinc-300">
               <span className="w-3 h-3 rounded-full shrink-0" style={{ background: color }} />

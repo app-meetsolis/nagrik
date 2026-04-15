@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
+import { auth } from "@clerk/nextjs/server";
 import { ConditionalCitizenNav } from "@/components/ConditionalCitizenNav";
 import "./globals.css";
 
@@ -26,18 +27,23 @@ export const viewport: Viewport = {
   themeColor: "#09090b",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const { userId, sessionClaims } = await auth();
+  const role = (sessionClaims?.metadata as { role?: string } | undefined)?.role;
+  // Citizens get a desktop sidebar → push content right on md+ screens
+  const isCitizen = !!userId && role !== "authority" && role !== "admin";
+
   return (
     <ClerkProvider>
       <html
         lang="en"
         className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
       >
-        <body className="min-h-full flex flex-col">
+        <body className={`min-h-full flex flex-col${isCitizen ? " md:pl-56" : ""}`}>
           {children}
           <ConditionalCitizenNav />
         </body>

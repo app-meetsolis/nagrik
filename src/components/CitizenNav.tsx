@@ -2,40 +2,129 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Camera, Map, Trophy, ClipboardList } from 'lucide-react'
+import { Camera, Map, Trophy, ClipboardList, LogOut } from 'lucide-react'
+import { SignOutButton } from '@clerk/nextjs'
 
-const TABS = [
-  { href: '/report',      label: 'Report',      icon: Camera        },
-  { href: '/map',         label: 'Map',         icon: Map           },
-  { href: '/leaderboard', label: 'Leaderboard', icon: Trophy        },
-  { href: '/my-reports',  label: 'My Reports',  icon: ClipboardList },
+const SIDEBAR_LINKS = [
+  { href: '/report',      label: 'Report Issue', icon: Camera        },
+  { href: '/map',         label: 'Ward Map',     icon: Map           },
+  { href: '/leaderboard', label: 'Leaderboard',  icon: Trophy        },
+  { href: '/my-reports',  label: 'My Reports',   icon: ClipboardList },
 ]
 
 export function CitizenNav() {
   const path = usePathname()
 
   return (
-    <nav
-      className="fixed bottom-0 left-0 right-0 z-50 bg-zinc-950 border-t border-zinc-800"
-      style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
-    >
-      <div className="flex items-center h-14">
-        {TABS.map(({ href, label, icon: Icon }) => {
-          const active = path === href
-          return (
+    <>
+      {/* ── DESKTOP: left sidebar (md+) ─────────────────────────────────── */}
+      <aside className="hidden md:flex fixed left-0 top-0 bottom-0 w-56 flex-col border-r border-zinc-800 bg-zinc-950 z-50">
+
+        {/* Brand */}
+        <div className="px-5 py-5 border-b border-zinc-800">
+          <span className="text-lg font-bold tracking-tight text-white">nagrik</span>
+          <p className="text-xs text-zinc-500 mt-0.5">Citizen Portal</p>
+        </div>
+
+        {/* Nav links */}
+        <nav className="flex-1 px-3 py-4 flex flex-col gap-1">
+          {SIDEBAR_LINKS.map(({ href, label, icon: Icon }) => {
+            const active = path === href
+            return (
+              <Link
+                key={href}
+                href={href}
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
+                  active
+                    ? 'bg-orange-500/15 text-orange-400'
+                    : 'text-zinc-400 hover:bg-zinc-800 hover:text-white'
+                }`}
+              >
+                <Icon className="w-4 h-4 shrink-0" />
+                {label}
+              </Link>
+            )
+          })}
+        </nav>
+
+        {/* Sign out */}
+        <div className="px-3 py-4 border-t border-zinc-800">
+          <SignOutButton>
+            <button className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-zinc-500 hover:bg-zinc-800 hover:text-white transition-colors w-full">
+              <LogOut className="w-4 h-4 shrink-0" />
+              Sign Out
+            </button>
+          </SignOutButton>
+        </div>
+      </aside>
+
+      {/* ── MOBILE: bottom nav + camera FAB (below md) ──────────────────── */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-50">
+
+        {/* Camera FAB — raised orange circle */}
+        <div className="absolute left-1/2 -translate-x-1/2 -top-6">
+          <Link
+            href="/report"
+            className={`w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-transform active:scale-90 ${
+              path === '/report'
+                ? 'bg-orange-400 shadow-orange-400/40'
+                : 'bg-orange-500 shadow-orange-500/30'
+            }`}
+          >
+            <Camera className="w-6 h-6 text-white" />
+          </Link>
+        </div>
+
+        {/* Bottom bar */}
+        <nav
+          className="bg-zinc-950 border-t border-zinc-800"
+          style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+        >
+          <div className="flex items-center h-14">
+
+            {/* Left: Map + My Reports */}
             <Link
-              key={href}
-              href={href}
+              href="/map"
               className={`flex-1 flex flex-col items-center justify-center gap-0.5 h-full transition-colors ${
-                active ? 'text-orange-400' : 'text-zinc-500 hover:text-zinc-300'
+                path === '/map' ? 'text-orange-400' : 'text-zinc-500'
               }`}
             >
-              <Icon className="w-5 h-5" />
-              <span className="text-[10px] font-medium">{label}</span>
+              <Map className="w-5 h-5" />
+              <span className="text-[10px] font-medium">Map</span>
             </Link>
-          )
-        })}
+            <Link
+              href="/my-reports"
+              className={`flex-1 flex flex-col items-center justify-center gap-0.5 h-full transition-colors ${
+                path === '/my-reports' ? 'text-orange-400' : 'text-zinc-500'
+              }`}
+            >
+              <ClipboardList className="w-5 h-5" />
+              <span className="text-[10px] font-medium">Reports</span>
+            </Link>
+
+            {/* Centre gap for FAB */}
+            <div className="w-16 shrink-0" />
+
+            {/* Right: Leaderboard + Sign Out */}
+            <Link
+              href="/leaderboard"
+              className={`flex-1 flex flex-col items-center justify-center gap-0.5 h-full transition-colors ${
+                path === '/leaderboard' ? 'text-orange-400' : 'text-zinc-500'
+              }`}
+            >
+              <Trophy className="w-5 h-5" />
+              <span className="text-[10px] font-medium">Board</span>
+            </Link>
+            <SignOutButton>
+              <button className="flex-1 flex flex-col items-center justify-center gap-0.5 h-full text-zinc-500 hover:text-zinc-300 transition-colors">
+                <LogOut className="w-5 h-5" />
+                <span className="text-[10px] font-medium">Sign Out</span>
+              </button>
+            </SignOutButton>
+
+          </div>
+        </nav>
       </div>
-    </nav>
+    </>
   )
 }

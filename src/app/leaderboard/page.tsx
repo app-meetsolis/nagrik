@@ -66,7 +66,7 @@ export default async function LeaderboardPage() {
 
       <PublicNav />
 
-      <main className="flex-1 px-4 pt-5 pb-20 flex flex-col gap-6">
+      <main className="flex-1 px-4 pt-5 pb-20 md:pb-8 flex flex-col gap-6">
 
         {/* ── Podium — Top 3 ─────────────────────────────────────────── */}
         {top3.length > 0 && (

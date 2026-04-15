@@ -102,7 +102,7 @@ export default async function MyReportsPage() {
       </header>
 
       {/* List */}
-      <main className="flex-1 px-4 py-4 pb-20 flex flex-col gap-3">
+      <main className="flex-1 px-4 py-4 pb-20 md:pb-6 flex flex-col gap-3">
         {list.length === 0 ? (
           <div className="flex-1 flex flex-col items-center justify-center gap-4 py-20 text-center">
             <AlertCircle className="w-12 h-12 text-zinc-700" />
