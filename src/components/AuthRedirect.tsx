@@ -13,14 +13,17 @@ import { useRouter } from 'next/navigation'
  * this handles the soft client state update from the modal.
  */
 export function AuthRedirect() {
-  const { isLoaded, isSignedIn } = useUser()
+  const { isLoaded, isSignedIn, user } = useUser()
   const router = useRouter()
 
   useEffect(() => {
-    if (!isLoaded || !isSignedIn) return
+    if (!isLoaded || !isSignedIn || !user) return
+    const role = (user.publicMetadata as { role?: string })?.role
+    if (!role) { router.replace('/onboarding'); return }
+    if (role === 'authority' || role === 'admin') { router.replace('/dashboard'); return }
     const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)
     router.replace(isMobile ? '/report' : '/home')
-  }, [isLoaded, isSignedIn, router])
+  }, [isLoaded, isSignedIn, user, router])
 
   return null
 }

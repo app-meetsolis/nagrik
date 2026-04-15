@@ -32,3 +32,7 @@ export interface UpdateScoreData {
   authorityId: string
   newScore: number
 }
+
+// onboard.ts results
+export interface RegisterCitizenData   { redirectTo: 'citizen' }
+export interface RegisterAuthorityData { redirectTo: 'authority' }

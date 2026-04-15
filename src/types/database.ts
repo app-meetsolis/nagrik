@@ -19,6 +19,8 @@ export interface Ward {
 export interface Citizen {
   id: string
   clerk_user_id: string
+  name:  string | null
+  phone: string | null
   created_at: string
 }
 

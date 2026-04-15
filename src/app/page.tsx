@@ -34,11 +34,13 @@ async function fetchStats() {
 }
 
 export default async function LandingPage() {
-  const { userId } = await auth()
+  const { userId, sessionClaims } = await auth()
   if (userId) {
+    const role = (sessionClaims?.metadata as { role?: string })?.role
+    if (!role) redirect('/onboarding')
+    if (role === 'authority' || role === 'admin') redirect('/dashboard')
     const ua = (await headers()).get('user-agent') ?? ''
-    const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(ua)
-    redirect(isMobile ? '/report' : '/home')
+    redirect(/Android|iPhone|iPad|iPod|Mobile/i.test(ua) ? '/report' : '/home')
   }
 
   const stats = await fetchStats()
