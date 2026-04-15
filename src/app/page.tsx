@@ -1,5 +1,6 @@
 import { auth } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
+import { headers } from 'next/headers'
 import Link from 'next/link'
 import { SignInButton, SignUpButton } from '@clerk/nextjs'
 import { Button } from '@/components/ui/button'
@@ -33,7 +34,11 @@ async function fetchStats() {
 
 export default async function LandingPage() {
   const { userId } = await auth()
-  if (userId) redirect('/report')
+  if (userId) {
+    const ua = (await headers()).get('user-agent') ?? ''
+    const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(ua)
+    redirect(isMobile ? '/report' : '/map')
+  }
 
   const stats = await fetchStats()
   const resolutionRate = stats.totalIssues > 0
