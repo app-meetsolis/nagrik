@@ -19,9 +19,9 @@ interface CollectorFormValues {
   accessCode: string;
 }
 
-export default function OnboardingClient() {
+export default function OnboardingClient({ initialRole = null }: { initialRole?: Role }) {
   const router = useRouter();
-  const [selectedRole, setSelectedRole] = useState<Role>(null);
+  const [selectedRole, setSelectedRole] = useState<Role>(initialRole);
   const [showCode, setShowCode] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);

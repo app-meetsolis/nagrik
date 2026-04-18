@@ -3,26 +3,22 @@ import CitizenDashboardClient from './components/CitizenDashboardClient';
 import { getCitizenDashboard } from '@/actions/dashboard';
 import type { DashboardData } from '@/types/actions';
 import { redirect } from 'next/navigation';
-import { auth } from '@clerk/nextjs/server';
+import { getSession } from '@/lib/session';
 
 export default async function CitizenDashboardPage() {
-  const { userId } = await auth();
+  const session = await getSession();
 
-  // Not authenticated at all — send to sign-in
-  if (!userId) {
-    redirect('/sign-in');
+  // Not logged in — send to landing
+  if (!session) {
+    redirect('/');
   }
 
   const result = await getCitizenDashboard();
 
-  // If the citizen record doesn't exist yet (e.g. never completed onboarding),
-  // redirect to onboarding instead of showing an infinite skeleton
+  // If the citizen record doesn't exist, redirect to landing
+  // (can't call clearSession here — cookies can't be modified in a Server Component)
   if (!result.success) {
-    if (result.code === 'AUTH') {
-      redirect('/sign-in');
-    }
-    // NOT_FOUND or any other DB error → onboarding
-    redirect('/onboarding');
+    redirect('/');
   }
 
   const data: DashboardData = result.data;

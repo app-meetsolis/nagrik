@@ -1,6 +1,6 @@
 'use server'
 
-import { auth } from '@clerk/nextjs/server'
+import { getSession } from '@/lib/session'
 import { createServiceClient } from '@/lib/supabase/server'
 import type { ActionResult, CollectorDashboardData, PickupUI, RouteUI, RequestUI } from '@/types/actions'
 import { WASTE_TYPE_LABELS, BIN_COLOR_HEX } from '@/lib/wasteTypes'
@@ -22,53 +22,93 @@ function timeAgo(iso: string) {
 }
 
 export async function getCollectorDashboard(): Promise<ActionResult<CollectorDashboardData>> {
-  const { userId } = await auth()
-  if (!userId) return { success: false, error: 'Unauthenticated', code: 'AUTH' }
+  const session = await getSession()
+  if (!session) return { success: false, error: 'Unauthenticated', code: 'AUTH' }
 
+  // Fetch authority without embedded join
   const { data: authority } = await db()
     .from('authorities')
-    .select('id, name, ward_id, wards(name)')
-    .eq('clerk_user_id', userId)
+    .select('id, name, ward_id')
+    .eq('id', session.id)
     .maybeSingle()
 
   if (!authority) return { success: false, error: 'Collector not found', code: 'NOT_FOUND' }
 
-  const wardName = (authority.wards as { name: string } | null)?.name ?? 'Unknown Ward'
+  // Fetch ward name separately
+  let wardName = 'Unknown Ward'
+  if (authority.ward_id) {
+    const { data: ward } = await db()
+      .from('wards')
+      .select('name')
+      .eq('id', authority.ward_id)
+      .maybeSingle()
+    if (ward) wardName = ward.name
+  }
+
   const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0)
 
   const [scansRes, routesRes, requestsRes] = await Promise.all([
     db()
       .from('waste_scans')
-      .select('id, waste_type, bin_color, pickup_status, created_at, citizens(name, phone), wards(name)')
+      .select('id, waste_type, bin_color, pickup_status, created_at, citizen_id, ward_id')
       .eq('ward_id', authority.ward_id)
       .gte('created_at', todayStart.toISOString())
       .order('created_at', { ascending: false })
       .limit(20),
     db()
       .from('routes')
-      .select('id, name, status, distance_km, estimated_minutes, wards(name), route_stops(id, address, status, sort_order)')
+      .select('id, name, status, distance_km, estimated_minutes, ward_id')
       .eq('collector_id', authority.id)
       .eq('date', todayStart.toISOString().split('T')[0])
       .order('created_at', { ascending: true }),
     db()
       .from('citizen_requests')
-      .select('id, waste_type, urgency, description, image_url, created_at, citizens(name, phone), wards(name)')
+      .select('id, waste_type, urgency, description, image_url, created_at, citizen_id, ward_id')
       .eq('ward_id', authority.ward_id)
       .eq('status', 'open')
       .order('created_at', { ascending: false })
       .limit(10),
   ])
 
+  // Batch-fetch citizen names for scans and requests
+  const citizenIds = [
+    ...new Set([
+      ...(scansRes.data ?? []).map((s: { citizen_id: string | null }) => s.citizen_id),
+      ...(requestsRes.data ?? []).map((r: { citizen_id: string | null }) => r.citizen_id),
+    ].filter(Boolean))
+  ]
+  const citizenMap: Record<string, { name: string; phone: string }> = {}
+  if (citizenIds.length > 0) {
+    const { data: citizens } = await db().from('citizens').select('id, name, phone').in('id', citizenIds)
+    for (const c of (citizens ?? [])) {
+      citizenMap[c.id] = { name: c.name ?? 'Unknown', phone: c.phone ?? '' }
+    }
+  }
+
+  // Batch-fetch route stops
+  const routeIds = (routesRes.data ?? []).map((r: { id: string }) => r.id)
+  const stopsMap: Record<string, Array<{ id: string; address: string; status: string; sort_order: number }>> = {}
+  if (routeIds.length > 0) {
+    const { data: stops } = await db()
+      .from('route_stops')
+      .select('id, route_id, address, status, sort_order')
+      .in('route_id', routeIds)
+      .order('sort_order', { ascending: true })
+    for (const s of (stops ?? [])) {
+      if (!stopsMap[s.route_id]) stopsMap[s.route_id] = []
+      stopsMap[s.route_id].push(s)
+    }
+  }
+
   const pickups: PickupUI[] = (scansRes.data ?? []).map((s: {
     id: string; waste_type: string; bin_color: string; pickup_status: string; created_at: string
-    citizens: { name: string; phone: string } | null
-    wards: { name: string } | null
+    citizen_id: string | null; ward_id: string | null
   }) => ({
     id: s.id,
-    citizen: s.citizens?.name ?? 'Unknown',
-    phone: s.citizens?.phone ?? '',
-    address: s.wards?.name ?? wardName,
-    ward: s.wards?.name ?? wardName,
+    citizen: s.citizen_id ? (citizenMap[s.citizen_id]?.name ?? 'Unknown') : 'Unknown',
+    phone: s.citizen_id ? (citizenMap[s.citizen_id]?.phone ?? '') : '',
+    address: wardName,
+    ward: wardName,
     wasteType: WASTE_TYPE_LABELS[s.waste_type] ?? s.waste_type,
     binColor: s.bin_color,
     binColorHex: BIN_COLOR_HEX[s.bin_color] ?? '#6B7280',
@@ -80,16 +120,15 @@ export async function getCollectorDashboard(): Promise<ActionResult<CollectorDas
 
   const routes: RouteUI[] = (routesRes.data ?? []).map((r: {
     id: string; name: string; status: string; distance_km: number | null
-    estimated_minutes: number | null; wards: { name: string } | null
-    route_stops: { id: string; address: string; status: string; sort_order: number }[]
+    estimated_minutes: number | null; ward_id: string | null
   }) => {
-    const stops = [...(r.route_stops ?? [])].sort((a, b) => a.sort_order - b.sort_order)
+    const stops = stopsMap[r.id] ?? []
     const completed = stops.filter(s => s.status === 'done').length
     const mins = r.estimated_minutes ?? 0
     return {
       id: r.id,
       name: r.name,
-      ward: r.wards?.name ?? wardName,
+      ward: wardName,
       stops: stops.length,
       completed,
       distance: r.distance_km ? `${r.distance_km} km` : '—',
@@ -102,14 +141,13 @@ export async function getCollectorDashboard(): Promise<ActionResult<CollectorDas
   const requests: RequestUI[] = (requestsRes.data ?? []).map((r: {
     id: string; waste_type: string; urgency: string; description: string | null
     image_url: string | null; created_at: string
-    citizens: { name: string; phone: string } | null
-    wards: { name: string } | null
+    citizen_id: string | null; ward_id: string | null
   }) => ({
     id: r.id,
-    citizen: r.citizens?.name ?? 'Unknown',
-    phone: r.citizens?.phone ?? '',
-    address: r.wards?.name ?? wardName,
-    ward: r.wards?.name ?? wardName,
+    citizen: r.citizen_id ? (citizenMap[r.citizen_id]?.name ?? 'Unknown') : 'Unknown',
+    phone: r.citizen_id ? (citizenMap[r.citizen_id]?.phone ?? '') : '',
+    address: wardName,
+    ward: wardName,
     wasteType: r.waste_type,
     urgency: r.urgency as 'high' | 'medium' | 'low',
     submittedAt: timeAgo(r.created_at),
@@ -132,8 +170,8 @@ export async function updatePickupStatus(
   scanId: string,
   status: 'in-progress' | 'completed',
 ): Promise<ActionResult<void>> {
-  const { userId } = await auth()
-  if (!userId) return { success: false, error: 'Unauthenticated', code: 'AUTH' }
+  const session = await getSession()
+  if (!session) return { success: false, error: 'Unauthenticated', code: 'AUTH' }
 
   const update: Record<string, string | null> = {
     pickup_status: status === 'completed' ? 'collected' : 'pending',
@@ -146,16 +184,12 @@ export async function updatePickupStatus(
 }
 
 export async function acceptRequest(requestId: string): Promise<ActionResult<void>> {
-  const { userId } = await auth()
-  if (!userId) return { success: false, error: 'Unauthenticated', code: 'AUTH' }
-
-  const { data: authority } = await db()
-    .from('authorities').select('id').eq('clerk_user_id', userId).maybeSingle()
-  if (!authority) return { success: false, error: 'Not a collector', code: 'NOT_COLLECTOR' }
+  const session = await getSession()
+  if (!session) return { success: false, error: 'Unauthenticated', code: 'AUTH' }
 
   const { error } = await db()
     .from('citizen_requests')
-    .update({ status: 'accepted', collector_id: authority.id })
+    .update({ status: 'accepted', collector_id: session.id })
     .eq('id', requestId)
 
   if (error) return { success: false, error: error.message, code: 'DB' }
@@ -163,8 +197,8 @@ export async function acceptRequest(requestId: string): Promise<ActionResult<voi
 }
 
 export async function declineRequest(requestId: string): Promise<ActionResult<void>> {
-  const { userId } = await auth()
-  if (!userId) return { success: false, error: 'Unauthenticated', code: 'AUTH' }
+  const session = await getSession()
+  if (!session) return { success: false, error: 'Unauthenticated', code: 'AUTH' }
 
   const { error } = await db()
     .from('citizen_requests').update({ status: 'declined' }).eq('id', requestId)

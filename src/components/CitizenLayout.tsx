@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation';
 import { Home, MapPin, Camera, Trophy, ClipboardList, Sun, Moon, LogOut } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useTheme } from '@/context/ThemeContext';
-import { SignOutButton } from '@clerk/nextjs';
+import { signOut } from '@/actions/auth';
 
 interface CitizenLayoutProps {
   children: React.ReactNode;
@@ -76,8 +76,8 @@ export default function CitizenLayout({ children }: CitizenLayoutProps) {
           })}
         </nav>
 
-        {/* Theme toggle */}
-        <div className="px-3 py-4 border-t border-inherit">
+        {/* Bottom actions */}
+        <div className="px-3 py-4 border-t border-inherit space-y-1">
           <motion.button
             whileTap={{ scale: 0.95 }}
             onClick={toggleTheme}
@@ -86,14 +86,15 @@ export default function CitizenLayout({ children }: CitizenLayoutProps) {
             {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             {isDark ? 'Light Mode' : 'Dark Mode'}
           </motion.button>
-          <SignOutButton redirectUrl="/">
+          <form action={signOut}>
             <button
+              type="submit"
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl border border-transparent transition-all duration-200 text-sm font-medium ${inactiveItem}`}
             >
               <LogOut className="w-4 h-4" />
               Sign Out
             </button>
-          </SignOutButton>
+          </form>
         </div>
       </aside>
 
@@ -113,8 +114,9 @@ export default function CitizenLayout({ children }: CitizenLayoutProps) {
           >
             {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
           </motion.button>
-          <SignOutButton redirectUrl="/">
+          <form action={signOut}>
             <motion.button
+              type="submit"
               whileTap={{ scale: 0.88 }}
               whileHover={{ scale: 1.05 }}
               className={`w-9 h-9 rounded-full flex items-center justify-center border transition-all duration-200 ${
@@ -126,7 +128,7 @@ export default function CitizenLayout({ children }: CitizenLayoutProps) {
             >
               <LogOut className="w-4 h-4" />
             </motion.button>
-          </SignOutButton>
+          </form>
         </div>
       </div>
 

@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
-import { ClerkProvider } from '@clerk/nextjs';
 import { ThemeProvider } from '@/context/ThemeContext';
 import './globals.css';
 
@@ -25,17 +24,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider
-      signInUrl="/sign-in"
-      signUpUrl="/sign-up"
-    >
-      <html lang="en">
-        <body className={`${inter.className} bg-[#0A0A0A] text-[#FAFAFA] antialiased`}>
-          <ThemeProvider>
-            {children}
-          </ThemeProvider>
-        </body>
-      </html>
-    </ClerkProvider>
+    <html lang="en">
+      <body className={`${inter.className} bg-[#0A0A0A] text-[#FAFAFA] antialiased`}>
+        <ThemeProvider>
+          {children}
+        </ThemeProvider>
+      </body>
+    </html>
   );
 }

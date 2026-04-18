@@ -1,6 +1,6 @@
 'use server'
 
-import { auth } from '@clerk/nextjs/server'
+import { getSession } from '@/lib/session'
 import { createServiceClient } from '@/lib/supabase/server'
 import { clampScore } from '@/lib/score'
 import type { ActionResult, LogWasteScanData } from '@/types/actions'
@@ -20,21 +20,21 @@ interface LogWasteScanInput {
 export async function logWasteScan(
   input: LogWasteScanInput
 ): Promise<ActionResult<LogWasteScanData>> {
-  const { userId } = await auth()
-  if (!userId) return { success: false, error: 'Unauthenticated', code: 'AUTH' }
+  const session = await getSession()
+  if (!session) return { success: false, error: 'Unauthenticated', code: 'AUTH' }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const db = createServiceClient() as any
 
-  // Upsert citizen record (idempotent)
+  // Get citizen record by session id
   const { data: citizen, error: citizenErr } = await db
     .from('citizens')
-    .upsert({ clerk_user_id: userId }, { onConflict: 'clerk_user_id' })
     .select('id, eco_points')
+    .eq('id', session.id)
     .single() as { data: { id: string; eco_points: number } | null; error: { message: string } | null }
 
   if (citizenErr || !citizen) {
-    return { success: false, error: 'Failed to create citizen record', code: 'CITIZEN_UPSERT' }
+    return { success: false, error: 'Citizen record not found', code: 'CITIZEN_UPSERT' }
   }
 
   // Find collector (authority) for this ward

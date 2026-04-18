@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation';
 import { LayoutDashboard, Truck, MapPin, ClipboardList, BarChart3, Sun, Moon, LogOut } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useTheme } from '@/context/ThemeContext';
-import { SignOutButton } from '@clerk/nextjs';
+import { signOut } from '@/actions/auth';
 
 interface CollectorLayoutProps {
   children: React.ReactNode;
@@ -75,14 +75,15 @@ export default function CollectorLayout({ children }: CollectorLayoutProps) {
             {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             {isDark ? 'Light Mode' : 'Dark Mode'}
           </motion.button>
-          <SignOutButton redirectUrl="/">
+          <form action={signOut}>
             <button
+              type="submit"
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl border border-transparent transition-all duration-200 text-sm font-medium ${inactiveItem}`}
             >
               <LogOut className="w-4 h-4" />
               Sign Out
             </button>
-          </SignOutButton>
+          </form>
         </div>
       </aside>
 
@@ -104,8 +105,9 @@ export default function CollectorLayout({ children }: CollectorLayoutProps) {
           >
             {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
           </motion.button>
-          <SignOutButton redirectUrl="/">
+          <form action={signOut}>
             <motion.button
+              type="submit"
               whileTap={{ scale: 0.88 }}
               className={`w-9 h-9 rounded-full flex items-center justify-center border transition-all duration-200 ${
                 isDark ? 'bg-[#1A1A1A] border-[#2A2A2A] text-zinc-400' : 'bg-white border-gray-200 text-gray-500'
@@ -114,7 +116,7 @@ export default function CollectorLayout({ children }: CollectorLayoutProps) {
             >
               <LogOut className="w-4 h-4" />
             </motion.button>
-          </SignOutButton>
+          </form>
         </div>
       </div>
 

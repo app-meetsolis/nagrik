@@ -1,6 +1,6 @@
 'use server'
 
-import { auth } from '@clerk/nextjs/server'
+import { getSession } from '@/lib/session'
 import { createServiceClient } from '@/lib/supabase/server'
 import type { ActionResult, DashboardData, ScanRowUI } from '@/types/actions'
 import { WASTE_TYPE_LABELS, BIN_COLOR_HEX, BIN_LABELS } from '@/lib/wasteTypes'
@@ -9,29 +9,70 @@ import { WASTE_TYPE_LABELS, BIN_COLOR_HEX, BIN_LABELS } from '@/lib/wasteTypes'
 const db = () => createServiceClient() as any
 
 export async function getCitizenDashboard(): Promise<ActionResult<DashboardData>> {
-  const { userId } = await auth()
-  if (!userId) return { success: false, error: 'Unauthenticated', code: 'AUTH' }
+  const session = await getSession()
+  if (!session) return { success: false, error: 'Unauthenticated', code: 'AUTH' }
 
+  // Query only columns guaranteed to exist (eco_points, ward_id may not exist if migration 003 hasn't run)
   const { data: citizen, error: cErr } = await db()
     .from('citizens')
-    .select('id, name, eco_points, ward_id, wards(name, recycling_rate)')
-    .eq('clerk_user_id', userId)
+    .select('id, name')
+    .eq('id', session.id)
     .maybeSingle()
 
-  if (cErr || !citizen) return { success: false, error: 'Citizen not found', code: 'NOT_FOUND' }
+  if (cErr || !citizen) {
+    console.error('[getCitizenDashboard] Citizen not found. session.id:', session.id, 'error:', cErr?.message)
+    return { success: false, error: 'Citizen not found', code: 'NOT_FOUND' }
+  }
 
+  // Try to get ward info — gracefully handle if ward_id column doesn't exist
+  let wardName = 'Mansarovar'
+  let wardRecyclingRate = 60
+  try {
+    const { data: citizenWard } = await db()
+      .from('citizens')
+      .select('ward_id')
+      .eq('id', session.id)
+      .maybeSingle()
+
+    if (citizenWard?.ward_id) {
+      const { data: ward } = await db()
+        .from('wards')
+        .select('name, recycling_rate')
+        .eq('id', citizenWard.ward_id)
+        .maybeSingle()
+      if (ward) {
+        wardName = ward.name
+        wardRecyclingRate = ward.recycling_rate ?? 60
+      }
+    }
+  } catch {
+    // ward_id column may not exist — use defaults
+  }
+
+  // Try to get eco_points — may not exist if migration 003 wasn't run
+  let ecoPoints = 0
+  try {
+    const { data: pts } = await db()
+      .from('citizens')
+      .select('eco_points')
+      .eq('id', session.id)
+      .maybeSingle()
+    if (pts?.eco_points != null) ecoPoints = pts.eco_points
+  } catch {
+    // eco_points column may not exist
+  }
+
+  // Fetch scans — only use columns that exist on waste_scans
   const { data: scans } = await db()
     .from('waste_scans')
-    .select('id, waste_type, bin_color, recyclable, points_earned, pickup_status, created_at, wards(name)')
+    .select('id, waste_type, bin_color, recyclable, points_earned, pickup_status, created_at')
     .eq('citizen_id', citizen.id)
     .order('created_at', { ascending: false })
     .limit(8)
 
-  const ward = citizen.wards as { name: string; recycling_rate: number } | null
   const scanRows = (scans ?? []) as Array<{
     id: string; waste_type: string; bin_color: string; recyclable: boolean
     points_earned: number; pickup_status: string; created_at: string
-    wards: { name: string } | null
   }>
 
   const recent_scans: ScanRowUI[] = scanRows.map(s => ({
@@ -43,7 +84,7 @@ export async function getCitizenDashboard(): Promise<ActionResult<DashboardData>
     recyclable: s.recyclable,
     points: s.points_earned,
     status: s.pickup_status as 'pending' | 'collected',
-    ward: s.wards?.name ?? ward?.name ?? 'Unknown',
+    ward: wardName,
     timestamp: new Date(s.created_at).getTime(),
   }))
 
@@ -52,13 +93,13 @@ export async function getCitizenDashboard(): Promise<ActionResult<DashboardData>
     data: {
       citizen: {
         name: citizen.name ?? 'Citizen',
-        eco_points: citizen.eco_points ?? 0,
-        ward_name: ward?.name ?? 'Jaipur',
+        eco_points: ecoPoints,
+        ward_name: wardName,
       },
       stats: {
         total_scans: scanRows.length,
         recyclable_count: scanRows.filter(s => s.recyclable).length,
-        ward_recycling_rate: ward?.recycling_rate ?? 60,
+        ward_recycling_rate: wardRecyclingRate,
       },
       recent_scans,
     },

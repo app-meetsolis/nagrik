@@ -1,6 +1,6 @@
 'use server'
 
-import { auth } from '@clerk/nextjs/server'
+import { getSession } from '@/lib/session'
 import { createServiceClient } from '@/lib/supabase/server'
 import { clampScore } from '@/lib/score'
 import type { ActionResult, ConfirmPickupData } from '@/types/actions'
@@ -8,17 +8,17 @@ import type { ActionResult, ConfirmPickupData } from '@/types/actions'
 export async function confirmPickup(
   scanId: string
 ): Promise<ActionResult<ConfirmPickupData>> {
-  const { userId } = await auth()
-  if (!userId) return { success: false, error: 'Unauthenticated', code: 'AUTH' }
+  const session = await getSession()
+  if (!session) return { success: false, error: 'Unauthenticated', code: 'AUTH' }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const db = createServiceClient() as any
 
-  // Find authority/collector
+  // Find authority/collector by session id
   const { data: authority } = await db
     .from('authorities')
     .select('id, score, resolution_count, ward_id')
-    .eq('clerk_user_id', userId)
+    .eq('id', session.id)
     .single() as { data: { id: string; score: number; resolution_count: number; ward_id: string | null } | null; error: unknown }
 
   if (!authority) return { success: false, error: 'Authority record not found', code: 'NOT_AUTHORITY' }

@@ -1,7 +1,7 @@
 'use server'
 
-import { auth } from '@clerk/nextjs/server'
 import { createServiceClient } from '@/lib/supabase/server'
+import { getSession, setSession } from '@/lib/session'
 import type { ActionResult, RegisterCitizenData, RegisterCollectorData, CheckUserResult } from '@/types/actions'
 
 const COLLECTOR_CODE = 'NAGRIK2024'
@@ -10,40 +10,22 @@ const COLLECTOR_CODE = 'NAGRIK2024'
 const db = () => createServiceClient() as any
 
 export async function checkExistingUser(): Promise<CheckUserResult> {
-  const { userId } = await auth()
-  if (!userId) return null
-
-  const { data: citizen } = await db()
-    .from('citizens')
-    .select('id, name')
-    .eq('clerk_user_id', userId)
-    .not('name', 'is', null)
-    .maybeSingle()
-
-  if (citizen?.name) return 'citizen'
-
-  const { data: authority } = await db()
-    .from('authorities')
-    .select('id')
-    .eq('clerk_user_id', userId)
-    .maybeSingle()
-
-  if (authority) return 'collector'
-
-  return null
+  const session = await getSession()
+  if (!session) return null
+  return session.role
 }
 
 export async function registerCitizen(
   name: string,
   phone: string,
 ): Promise<ActionResult<RegisterCitizenData>> {
-  const { userId } = await auth()
-  if (!userId) return { success: false, error: 'Not authenticated', code: 'AUTH' }
+  // Generate a simple unique ID for this user
+  const clerkUserId = `citizen_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
 
   const { data, error } = await db()
     .from('citizens')
     .upsert(
-      { clerk_user_id: userId, name, phone, eco_points: 0 },
+      { clerk_user_id: clerkUserId, name, phone },
       { onConflict: 'clerk_user_id' }
     )
     .select('id')
@@ -52,6 +34,9 @@ export async function registerCitizen(
   if (error || !data) {
     return { success: false, error: error?.message ?? 'Registration failed', code: 'DB' }
   }
+
+  // Set session cookie
+  await setSession({ role: 'citizen', id: data.id, clerkUserId })
 
   return { success: true, data: { citizenId: data.id } }
 }
@@ -63,8 +48,7 @@ export async function registerCollector(
     return { success: false, error: 'Invalid access code', code: 'INVALID_CODE' }
   }
 
-  const { userId } = await auth()
-  if (!userId) return { success: false, error: 'Not authenticated', code: 'AUTH' }
+  const clerkUserId = `collector_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
 
   const { data: ward } = await db()
     .from('wards')
@@ -76,7 +60,7 @@ export async function registerCollector(
     .from('authorities')
     .upsert(
       {
-        clerk_user_id: userId,
+        clerk_user_id: clerkUserId,
         name: 'Rajesh Kumar',
         ward_id: ward?.id ?? null,
         score: 70,
@@ -91,6 +75,9 @@ export async function registerCollector(
   if (error || !data) {
     return { success: false, error: error?.message ?? 'Registration failed', code: 'DB' }
   }
+
+  // Set session cookie
+  await setSession({ role: 'collector', id: data.id, clerkUserId })
 
   return { success: true, data: { collectorId: data.id } }
 }
@@ -108,13 +95,13 @@ export async function registerAuthority(
   name: string,
   wardId: string,
 ): Promise<ActionResult<{ authorityId: string }>> {
-  const { userId } = await auth()
-  if (!userId) return { success: false, error: 'Not authenticated', code: 'AUTH' }
+  const session = await getSession()
+  const clerkUserId = session?.clerkUserId ?? `authority_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
 
   const { data, error } = await db()
     .from('authorities')
     .upsert(
-      { clerk_user_id: userId, name, ward_id: wardId, score: 70, verified: true, on_duty: true },
+      { clerk_user_id: clerkUserId, name, ward_id: wardId, score: 70, verified: true, on_duty: true },
       { onConflict: 'clerk_user_id' }
     )
     .select('id')
@@ -124,5 +111,6 @@ export async function registerAuthority(
     return { success: false, error: error?.message ?? 'Registration failed', code: 'DB' }
   }
 
+  await setSession({ role: 'collector', id: data.id, clerkUserId })
   return { success: true, data: { authorityId: data.id } }
 }

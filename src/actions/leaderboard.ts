@@ -17,7 +17,7 @@ export async function getLeaderboard(): Promise<ActionResult<LeaderboardData>> {
   const [citizensRes, wardsRes, scanCountsRes] = await Promise.all([
     db()
       .from('citizens')
-      .select('id, name, eco_points, ward_id, wards(name)')
+      .select('id, name, eco_points, ward_id')
       .not('name', 'is', null)
       .order('eco_points', { ascending: false })
       .limit(20),
@@ -31,6 +31,12 @@ export async function getLeaderboard(): Promise<ActionResult<LeaderboardData>> {
       .select('citizen_id, recyclable'),
   ])
 
+  // Build ward name map from wards result
+  const wardNameMap: Record<string, string> = {}
+  for (const w of (wardsRes.data ?? [])) {
+    wardNameMap[w.id] = w.name
+  }
+
   type RawScan = { citizen_id: string | null; recyclable: boolean }
   const allScans: RawScan[] = scanCountsRes.data ?? []
 
@@ -43,8 +49,7 @@ export async function getLeaderboard(): Promise<ActionResult<LeaderboardData>> {
   })
 
   const citizens: LeaderboardCitizen[] = (citizensRes.data ?? []).map((c: {
-    id: string; name: string; eco_points: number
-    wards: { name: string } | null
+    id: string; name: string; eco_points: number; ward_id: string | null
   }, i: number) => {
     const stats = scanMap[c.id] ?? { total: 0, recyclable: 0 }
     const recyclableRate = stats.total > 0 ? Math.round((stats.recyclable / stats.total) * 100) : 0
@@ -52,7 +57,7 @@ export async function getLeaderboard(): Promise<ActionResult<LeaderboardData>> {
       rank: i + 1,
       id: c.id,
       name: c.name,
-      ward: c.wards?.name ?? 'Unknown',
+      ward: c.ward_id ? (wardNameMap[c.ward_id] ?? 'Unknown') : 'Unknown',
       ecoPoints: c.eco_points,
       totalScans: stats.total,
       recyclableRate,
@@ -73,7 +78,7 @@ export async function getLeaderboard(): Promise<ActionResult<LeaderboardData>> {
   const wards: LeaderboardWard[] = (wardsRes.data ?? []).map((w: {
     id: string; name: string; city: string; score: number; recycling_rate: number; zone: string
   }, i: number) => {
-    const citizens = wardCitizenMap[w.id] ?? 0
+    const citizenCount = wardCitizenMap[w.id] ?? 0
     const totalScans = wardScanMap[w.id] ?? 0
     return {
       rank: i + 1,
@@ -81,8 +86,8 @@ export async function getLeaderboard(): Promise<ActionResult<LeaderboardData>> {
       name: w.name,
       zone: w.zone ?? 'Central',
       totalPoints: w.score,
-      activeCitizens: citizens,
-      avgScans: citizens > 0 ? Math.round((totalScans / citizens) * 10) / 10 : 0,
+      activeCitizens: citizenCount,
+      avgScans: citizenCount > 0 ? Math.round((totalScans / citizenCount) * 10) / 10 : 0,
       recyclingRate: w.recycling_rate ?? 60,
     }
   })

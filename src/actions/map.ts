@@ -9,21 +9,30 @@ const db = () => createServiceClient() as any
 export async function getRecyclingCentres(): Promise<ActionResult<RecyclingCentreUI[]>> {
   const { data, error } = await db()
     .from('recycling_centers')
-    .select('*, wards(name)')
+    .select('id, name, address, ward_id, lat, lng, phone, rating, status, hours, accepted_types, total_collections, description')
     .order('rating', { ascending: false })
 
   if (error) return { success: false, error: error.message, code: 'DB' }
 
+  // Batch-fetch ward names
+  const wardIds = [...new Set((data ?? []).map((c: { ward_id: string | null }) => c.ward_id).filter(Boolean))]
+  const wardMap: Record<string, string> = {}
+  if (wardIds.length > 0) {
+    const { data: wards } = await db().from('wards').select('id, name').in('id', wardIds)
+    for (const w of (wards ?? [])) {
+      wardMap[w.id] = w.name
+    }
+  }
+
   const centres: RecyclingCentreUI[] = (data ?? []).map((c: {
-    id: string; name: string; address: string; lat: number; lng: number
+    id: string; name: string; address: string; ward_id: string | null; lat: number; lng: number
     phone: string | null; rating: number; status: string; hours: string | null
     accepted_types: string[]; total_collections: number; description: string | null
-    wards: { name: string } | null
   }) => ({
     id: c.id,
     name: c.name,
     address: c.address,
-    ward: c.wards?.name ?? 'Jaipur',
+    ward: c.ward_id ? (wardMap[c.ward_id] ?? 'Jaipur') : 'Jaipur',
     distance: '—',
     phone: c.phone ?? '',
     hours: c.hours ?? '',

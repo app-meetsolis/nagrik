@@ -1,6 +1,6 @@
 'use server'
 
-import { auth } from '@clerk/nextjs/server'
+import { getSession } from '@/lib/session'
 import { createServiceClient } from '@/lib/supabase/server'
 import type { ActionResult, UploadScanImageData } from '@/types/actions'
 
@@ -11,8 +11,7 @@ export interface UploadPhotoData {
 }
 
 /**
- * Uploads an issue photo to Supabase Storage using the service role client
- * (bypasses RLS — Clerk auth is verified manually via auth()).
+ * Uploads an issue photo to Supabase Storage.
  *
  * FormData fields:
  *   photo     — File / Blob (image/jpeg)
@@ -21,15 +20,15 @@ export interface UploadPhotoData {
 export async function uploadIssuePhoto(
   formData: FormData
 ): Promise<ActionResult<UploadPhotoData>> {
-  const { userId } = await auth()
-  if (!userId) return { success: false, error: 'Unauthenticated', code: 'AUTH' }
+  const session = await getSession()
+  if (!session) return { success: false, error: 'Unauthenticated', code: 'AUTH' }
 
   const file = formData.get('photo') as File | null
   if (!file || file.size === 0) return { success: false, error: 'No photo provided', code: 'NO_FILE' }
 
   const geojsonId = (formData.get('geojsonId') as string | null) ?? null
   const supabase  = createServiceClient()
-  const path      = `${userId}/${Date.now()}.jpg`
+  const path      = `${session.clerkUserId}/${Date.now()}.jpg`
 
   const { error: uploadError } = await supabase.storage
     .from('issue-photos')
@@ -62,14 +61,14 @@ export async function uploadIssuePhoto(
 export async function uploadScanImage(
   formData: FormData
 ): Promise<ActionResult<UploadScanImageData>> {
-  const { userId } = await auth()
-  if (!userId) return { success: false, error: 'Unauthenticated', code: 'AUTH' }
+  const session = await getSession()
+  if (!session) return { success: false, error: 'Unauthenticated', code: 'AUTH' }
 
   const file = formData.get('file') as File | null
   if (!file || file.size === 0) return { success: false, error: 'No file provided', code: 'NO_FILE' }
 
   const supabase = createServiceClient()
-  const path = `${userId}/${Date.now()}.jpg`
+  const path = `${session.clerkUserId}/${Date.now()}.jpg`
 
   const { error: uploadError } = await supabase.storage
     .from('scan-photos')

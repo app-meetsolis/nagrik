@@ -94,7 +94,7 @@ export default function LandingClient() {
             transition={{ duration: 0.38, delay: 0.22 }}
           >
             <Link
-              href="/sign-in"
+              href="/onboarding?role=citizen"
               className="group flex items-center gap-4 bg-[#141414] border-2 border-[#22C55E]/30 hover:border-[#22C55E]/70 hover:bg-[#22C55E]/5 rounded-2xl p-5 transition-all duration-200"
             >
               <div className="w-11 h-11 rounded-xl bg-[#22C55E]/15 border border-[#22C55E]/30 flex items-center justify-center flex-shrink-0">
@@ -114,7 +114,7 @@ export default function LandingClient() {
             transition={{ duration: 0.38, delay: 0.28 }}
           >
             <Link
-              href="/sign-in"
+              href="/onboarding?role=collector"
               className="group flex items-center gap-4 bg-[#141414] border-2 border-[#1F1F1F] hover:border-zinc-600/50 hover:bg-white/[0.02] rounded-2xl p-5 transition-all duration-200"
             >
               <div className="w-11 h-11 rounded-xl bg-white/8 border border-white/10 flex items-center justify-center flex-shrink-0">
