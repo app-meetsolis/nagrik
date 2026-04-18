@@ -97,7 +97,7 @@ export function OnboardingShell({ wards, defaultName }: Props) {
                 </div>
                 <div>
                   <p className="text-sm font-semibold text-slate-900">Citizen</p>
-                  <p className="text-xs text-slate-400 mt-0.5 leading-snug">Report civic issues in your ward</p>
+                  <p className="text-xs text-slate-400 mt-0.5 leading-snug">Scan &amp; segregate your waste. Earn eco-points.</p>
                 </div>
               </button>
 
@@ -110,7 +110,7 @@ export function OnboardingShell({ wards, defaultName }: Props) {
                 </div>
                 <div>
                   <p className="text-sm font-semibold text-slate-900">Authority</p>
-                  <p className="text-xs text-slate-400 mt-0.5 leading-snug">Manage and resolve ward issues</p>
+                  <p className="text-xs text-slate-400 mt-0.5 leading-snug">Manage waste pickups for your ward.</p>
                 </div>
               </button>
             </div>

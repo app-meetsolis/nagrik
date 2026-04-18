@@ -2,15 +2,14 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Camera, Map, Trophy, ClipboardList, LogOut, Home } from 'lucide-react'
+import { Camera, MapPin, Trophy, LogOut, Home } from 'lucide-react'
 import { SignOutButton } from '@clerk/nextjs'
 
 const SIDEBAR_LINKS = [
-  { href: '/home',        label: 'Home',         icon: Home          },
-  { href: '/report',      label: 'Report Issue', icon: Camera        },
-  { href: '/map',         label: 'Ward Map',     icon: Map           },
-  { href: '/leaderboard', label: 'Leaderboard',  icon: Trophy        },
-  { href: '/my-reports',  label: 'My Reports',   icon: ClipboardList },
+  { href: '/home',        label: 'Home',        icon: Home   },
+  { href: '/report',      label: 'Scan Waste',  icon: Camera },
+  { href: '/map',         label: 'Centers',     icon: MapPin },
+  { href: '/leaderboard', label: 'Leaderboard', icon: Trophy },
 ]
 
 export function CitizenNav() {
@@ -24,7 +23,7 @@ export function CitizenNav() {
         {/* Brand */}
         <div className="px-5 py-5 border-b border-slate-100">
           <span className="text-lg font-bold tracking-tight text-slate-900">nagrik</span>
-          <p className="text-xs text-slate-400 mt-0.5">Citizen Portal</p>
+          <p className="text-xs text-slate-400 mt-0.5">Waste Segregation</p>
         </div>
 
         {/* Nav links */}
@@ -37,7 +36,7 @@ export function CitizenNav() {
                 href={href}
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
                   active
-                    ? 'bg-orange-50 text-orange-600'
+                    ? 'bg-green-50 text-green-700'
                     : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                 }`}
               >
@@ -62,14 +61,14 @@ export function CitizenNav() {
       {/* ── MOBILE: bottom nav + camera FAB (below md) ──────────────────── */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 z-50">
 
-        {/* Camera FAB — raised orange circle */}
+        {/* Camera FAB — raised green circle */}
         <div className="absolute left-1/2 -translate-x-1/2 -top-6">
           <Link
             href="/report"
             className={`w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-transform active:scale-90 ${
               path === '/report'
-                ? 'bg-orange-400 shadow-orange-400/40'
-                : 'bg-orange-500 shadow-orange-500/30'
+                ? 'bg-green-500 shadow-green-400/40'
+                : 'bg-green-600 shadow-green-600/30'
             }`}
           >
             <Camera className="w-6 h-6 text-white" />
@@ -83,24 +82,24 @@ export function CitizenNav() {
         >
           <div className="flex items-center h-14">
 
-            {/* Left: Map + My Reports */}
+            {/* Left: Home + Centers */}
+            <Link
+              href="/home"
+              className={`flex-1 flex flex-col items-center justify-center gap-0.5 h-full transition-colors ${
+                path === '/home' ? 'text-green-600' : 'text-slate-400'
+              }`}
+            >
+              <Home className="w-5 h-5" />
+              <span className="text-[10px] font-medium">Home</span>
+            </Link>
             <Link
               href="/map"
               className={`flex-1 flex flex-col items-center justify-center gap-0.5 h-full transition-colors ${
-                path === '/map' ? 'text-orange-500' : 'text-slate-400'
+                path === '/map' ? 'text-green-600' : 'text-slate-400'
               }`}
             >
-              <Map className="w-5 h-5" />
-              <span className="text-[10px] font-medium">Map</span>
-            </Link>
-            <Link
-              href="/my-reports"
-              className={`flex-1 flex flex-col items-center justify-center gap-0.5 h-full transition-colors ${
-                path === '/my-reports' ? 'text-orange-500' : 'text-slate-400'
-              }`}
-            >
-              <ClipboardList className="w-5 h-5" />
-              <span className="text-[10px] font-medium">Reports</span>
+              <MapPin className="w-5 h-5" />
+              <span className="text-[10px] font-medium">Centers</span>
             </Link>
 
             {/* Centre gap for FAB */}
@@ -110,7 +109,7 @@ export function CitizenNav() {
             <Link
               href="/leaderboard"
               className={`flex-1 flex flex-col items-center justify-center gap-0.5 h-full transition-colors ${
-                path === '/leaderboard' ? 'text-orange-500' : 'text-slate-400'
+                path === '/leaderboard' ? 'text-green-600' : 'text-slate-400'
               }`}
             >
               <Trophy className="w-5 h-5" />

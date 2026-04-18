@@ -1,37 +1,36 @@
 'use client'
 
 import { useState } from 'react'
-import { MapPin, Loader2, RotateCcw, AlertTriangle, CheckCircle2, ChevronRight } from 'lucide-react'
+import { MapPin, Loader2, RotateCcw, AlertTriangle, CheckCircle2, Leaf } from 'lucide-react'
 import Link from 'next/link'
 import { CameraCapture } from '@/components/camera/CameraCapture'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { uploadIssuePhoto } from '@/actions/upload'
-import { categorizePhoto } from '@/actions/categorize'
-import { submitIssue } from '@/actions/submit'
+import { classifyWaste } from '@/actions/categorize'
+import { logWasteScan } from '@/actions/scan'
 import { getGpsPosition, findNearestWardGeojsonId } from '@/lib/geo'
-import type { CategorizePhotoData, SubmitIssueData } from '@/types/actions'
+import type { ClassifyWasteData, LogWasteScanData } from '@/types/actions'
 
 // ─── Visual config ─────────────────────────────────────────────────────────
 
-const CATEGORY_CONFIG: Record<
-  CategorizePhotoData['category'],
-  { label: string; emoji: string; ring: string; text: string }
-> = {
-  garbage:     { label: 'Garbage',     emoji: '🗑️', ring: 'border-red-500/30',    text: 'text-red-400'    },
-  pothole:     { label: 'Pothole',     emoji: '🕳️', ring: 'border-amber-500/30',  text: 'text-amber-400'  },
-  drainage:    { label: 'Drainage',    emoji: '💧', ring: 'border-blue-500/30',   text: 'text-blue-400'   },
-  streetlight: { label: 'Streetlight', emoji: '💡', ring: 'border-yellow-500/30', text: 'text-yellow-400' },
-  other:       { label: 'Civic Issue', emoji: '📌', ring: 'border-zinc-500/30',   text: 'text-zinc-400'   },
+const WASTE_LABEL: Record<string, string> = {
+  wet_organic:     'Wet Organic',
+  dry_paper:       'Paper',
+  dry_plastic:     'Plastic',
+  dry_metal:       'Metal',
+  dry_glass:       'Glass',
+  e_waste:         'E-Waste',
+  hazardous:       'Hazardous',
+  textile:         'Textile',
+  non_recyclable:  'Non-Recyclable',
 }
 
-const SEVERITY_CONFIG: Record<
-  CategorizePhotoData['severity'],
-  { label: string; bg: string; text: string }
-> = {
-  minor:    { label: 'Minor',    bg: 'bg-green-500/15',  text: 'text-green-400'  },
-  moderate: { label: 'Moderate', bg: 'bg-amber-500/15',  text: 'text-amber-400'  },
-  critical: { label: 'Critical', bg: 'bg-red-500/15',    text: 'text-red-400'    },
+const BIN_CONFIG: Record<string, { label: string; dot: string; ring: string }> = {
+  green: { label: 'Green Bin',  dot: 'bg-green-500',  ring: 'border-green-200' },
+  blue:  { label: 'Blue Bin',   dot: 'bg-blue-500',   ring: 'border-blue-200'  },
+  red:   { label: 'Red Bin',    dot: 'bg-red-500',    ring: 'border-red-200'   },
+  grey:  { label: 'Grey Bin',   dot: 'bg-slate-400',  ring: 'border-slate-200' },
 }
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -52,8 +51,8 @@ interface Props { firstName: string }
 export default function ReportFlow({ firstName }: Props) {
   const [step, setStep]           = useState<Step>('capture')
   const [capture, setCapture]     = useState<CaptureState | null>(null)
-  const [aiResult, setAiResult]   = useState<CategorizePhotoData | null>(null)
-  const [submitted, setSubmitted] = useState<SubmitIssueData | null>(null)
+  const [aiResult, setAiResult]   = useState<(ClassifyWasteData & { pointsEarned: number }) | null>(null)
+  const [submitted, setSubmitted] = useState<LogWasteScanData | null>(null)
   const [statusMsg, setMsg]       = useState('')
 
   // ── 1. Photo captured → GPS + upload ──────────────────────────────────
@@ -66,7 +65,7 @@ export default function ReportFlow({ firstName }: Props) {
 
     setMsg('Uploading photo…')
     const fd = new FormData()
-    fd.append('photo', blob, 'issue.jpg')
+    fd.append('photo', blob, 'waste.jpg')
     if (geojsonId) fd.append('geojsonId', geojsonId)
 
     const result = await uploadIssuePhoto(fd)
@@ -81,28 +80,36 @@ export default function ReportFlow({ firstName }: Props) {
     setStep('preview')
   }
 
-  // ── 2. Analyze → OpenAI Vision ────────────────────────────────────────
+  // ── 2. Classify → OpenAI Vision ───────────────────────────────────────
   async function handleAnalyze() {
     if (!capture) return
     setStep('analyzing')
-    const result = await categorizePhoto(capture.photoUrl)
-    setAiResult(result.success ? result.data : {
-      category: 'other', severity: 'moderate', isValidCivicIssue: true,
-    })
+    const result = await classifyWaste(capture.photoUrl)
+    if (result.success) {
+      setAiResult(result.data)
+    } else {
+      setAiResult({
+        wasteType: 'non_recyclable', recyclable: false, binColor: 'grey',
+        prepSteps: [], tip: '', isWaste: true, pointsEarned: 2,
+      })
+    }
     setStep('categorized')
   }
 
-  // ── 3. Submit → insert issue row ──────────────────────────────────────
+  // ── 3. Log scan → insert waste_scan row ───────────────────────────────
   async function handleSubmit() {
     if (!capture || !aiResult) return
     setStep('submitting')
 
-    const result = await submitIssue({
-      photoUrl: capture.photoUrl,
-      wardId:   capture.wardId,
-      wardName: capture.wardName,
-      category: aiResult.category,
-      severity: aiResult.severity,
+    const result = await logWasteScan({
+      photoUrl:     capture.photoUrl,
+      wardId:       capture.wardId,
+      wasteType:    aiResult.wasteType,
+      recyclable:   aiResult.recyclable,
+      binColor:     aiResult.binColor,
+      prepSteps:    aiResult.prepSteps,
+      tip:          aiResult.tip,
+      pointsEarned: aiResult.pointsEarned,
     })
 
     if (!result.success) { setStep('categorized'); return }
@@ -120,7 +127,7 @@ export default function ReportFlow({ firstName }: Props) {
 
   // ── Ward pill (top-right) ─────────────────────────────────────────────
   const wardPill = capture?.wardName ? (
-    <div className="flex items-center gap-1.5 text-orange-400">
+    <div className="flex items-center gap-1.5 text-green-500">
       <MapPin className="w-3.5 h-3.5" />
       <span className="text-xs font-medium">{capture.wardName}</span>
     </div>
@@ -144,8 +151,8 @@ export default function ReportFlow({ firstName }: Props) {
             <p className="text-sm font-semibold text-white">{firstName}</p>
           </div>
           <div className="flex items-center gap-3">
-            <Link href="/my-reports" className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors">
-              My Reports
+            <Link href="/my-scans" className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors">
+              My Scans
             </Link>
             {wardPill}
           </div>
@@ -160,10 +167,10 @@ export default function ReportFlow({ firstName }: Props) {
       {/* ── PROCESSING / ANALYZING / SUBMITTING ─────────────────────────── */}
       {(step === 'processing' || step === 'analyzing' || step === 'submitting') && (
         <div className="flex-1 flex flex-col items-center justify-center gap-4 px-6 text-center">
-          <Loader2 className="w-10 h-10 text-orange-400 animate-spin" />
+          <Loader2 className="w-10 h-10 text-green-400 animate-spin" />
           <p className="text-zinc-400 text-sm">
-            {step === 'analyzing'  ? 'AI is analyzing your photo…' :
-             step === 'submitting' ? 'Submitting your report…'      :
+            {step === 'analyzing'  ? 'AI is classifying your waste…' :
+             step === 'submitting' ? 'Logging your scan…'             :
              statusMsg}
           </p>
           {step === 'analyzing' && (
@@ -177,17 +184,17 @@ export default function ReportFlow({ firstName }: Props) {
         <>
           <div className="flex-1 mx-4 my-2 rounded-2xl overflow-hidden relative">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={capture.dataUrl} alt="Captured issue" className="absolute inset-0 w-full h-full object-cover" />
+            <img src={capture.dataUrl} alt="Captured waste" className="absolute inset-0 w-full h-full object-cover" />
             {capture.wardName && (
               <div className="absolute bottom-3 left-3 bg-black/60 rounded-lg px-3 py-1.5 flex items-center gap-1.5">
-                <MapPin className="w-3 h-3 text-orange-400" />
+                <MapPin className="w-3 h-3 text-green-400" />
                 <span className="text-xs text-white font-medium">{capture.wardName}</span>
               </div>
             )}
           </div>
           <div className="shrink-0 px-4 pb-20 md:pb-8 pt-3 flex flex-col gap-3">
-            <Button onClick={handleAnalyze} className="w-full h-12 bg-orange-500 hover:bg-orange-400 text-white font-semibold rounded-xl">
-              Analyze Issue
+            <Button onClick={handleAnalyze} className="w-full h-12 bg-green-600 hover:bg-green-500 text-white font-semibold rounded-xl">
+              Classify Waste
             </Button>
             <Button variant="ghost" className="text-slate-500 hover:text-slate-900" onClick={reset}>
               <RotateCcw className="w-4 h-4 mr-2" /> Retake
@@ -198,59 +205,70 @@ export default function ReportFlow({ firstName }: Props) {
 
       {/* ── CATEGORIZED ─────────────────────────────────────────────────── */}
       {step === 'categorized' && capture && aiResult && (() => {
-        const cat = CATEGORY_CONFIG[aiResult.category]
-        const sev = SEVERITY_CONFIG[aiResult.severity]
+        const bin = BIN_CONFIG[aiResult.binColor] ?? BIN_CONFIG.grey
         return (
           <>
             <div className="mx-4 mt-2 h-44 rounded-2xl overflow-hidden relative shrink-0">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={capture.dataUrl} alt="Issue" className="absolute inset-0 w-full h-full object-cover" />
+              <img src={capture.dataUrl} alt="Waste" className="absolute inset-0 w-full h-full object-cover" />
             </div>
 
             <div className="flex-1 mx-4 my-3 rounded-2xl bg-white border border-slate-200 p-5 flex flex-col gap-4 overflow-auto">
-              {!aiResult.isValidCivicIssue ? (
+              {!aiResult.isWaste ? (
                 <div className="flex flex-col items-center gap-3 py-4 text-center">
                   <AlertTriangle className="w-10 h-10 text-amber-400" />
-                  <p className="text-white font-semibold">Not a civic issue</p>
-                  <p className="text-zinc-400 text-sm">
-                    This photo doesn&apos;t appear to show a civic infrastructure problem.
-                    Please take a photo of a pothole, garbage, drainage issue, or broken streetlight.
+                  <p className="text-slate-900 font-semibold">Not waste</p>
+                  <p className="text-slate-500 text-sm">
+                    This doesn&apos;t look like waste. Point your camera at a waste item.
                   </p>
                 </div>
               ) : (
                 <>
+                  {/* Waste type + bin */}
                   <div>
-                    <p className="text-xs text-zinc-500 uppercase tracking-widest mb-2">AI Detection</p>
-                    <div className={`flex items-center gap-3 p-4 rounded-xl border ${cat.ring} bg-slate-50`}>
-                      <span className="text-3xl">{cat.emoji}</span>
+                    <p className="text-xs text-zinc-500 uppercase tracking-widest mb-2">AI Classification</p>
+                    <div className={`flex items-center gap-3 p-4 rounded-xl border ${bin.ring} bg-slate-50`}>
+                      <div className={`w-5 h-5 rounded-full shrink-0 ${bin.dot}`} />
                       <div>
-                        <p className={`text-lg font-bold ${cat.text}`}>{cat.label}</p>
-                        <p className="text-xs text-zinc-500">Category detected by AI</p>
+                        <p className="text-base font-bold text-slate-900">{WASTE_LABEL[aiResult.wasteType] ?? aiResult.wasteType}</p>
+                        <p className="text-xs text-zinc-500">{bin.label}</p>
                       </div>
+                      <Badge className="ml-auto bg-green-50 text-green-700 border-green-200 text-xs">
+                        +{aiResult.pointsEarned} pts
+                      </Badge>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <div className={`px-3 py-1.5 rounded-lg ${sev.bg}`}>
-                      <span className={`text-sm font-semibold ${sev.text}`}>{sev.label} severity</span>
+
+                  {/* Prep steps */}
+                  {aiResult.prepSteps.length > 0 && (
+                    <div>
+                      <p className="text-xs text-zinc-500 uppercase tracking-widest mb-2">How to prepare</p>
+                      <ol className="flex flex-col gap-1.5">
+                        {aiResult.prepSteps.map((step, i) => (
+                          <li key={i} className="flex items-start gap-2 text-sm text-slate-700">
+                            <span className="w-5 h-5 rounded-full bg-green-100 text-green-700 text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">{i + 1}</span>
+                            {step}
+                          </li>
+                        ))}
+                      </ol>
                     </div>
-                    {capture.wardName && (
-                      <div className="flex items-center gap-1.5 text-zinc-400">
-                        <MapPin className="w-3.5 h-3.5" />
-                        <span className="text-sm">{capture.wardName}</span>
-                      </div>
-                    )}
-                  </div>
-                  <Badge className="w-fit bg-orange-50 text-orange-600 border-orange-200 text-xs">
-                    Ready to submit
-                  </Badge>
+                  )}
+
+                  {/* Eco tip */}
+                  {aiResult.tip && (
+                    <div className="flex items-start gap-2 bg-green-50 border border-green-100 rounded-xl p-3">
+                      <Leaf className="w-4 h-4 text-green-600 shrink-0 mt-0.5" />
+                      <p className="text-xs text-green-800">{aiResult.tip}</p>
+                    </div>
+                  )}
                 </>
               )}
             </div>
 
             <div className="shrink-0 px-4 pb-20 md:pb-8 pt-1 flex flex-col gap-3">
-              {aiResult.isValidCivicIssue && (
-                <Button onClick={handleSubmit} className="w-full h-12 bg-orange-500 hover:bg-orange-400 text-white font-semibold rounded-xl">
-                  Submit Report
+              {aiResult.isWaste && (
+                <Button onClick={handleSubmit} className="w-full h-12 bg-green-600 hover:bg-green-500 text-white font-semibold rounded-xl">
+                  Log Scan — Earn {aiResult.pointsEarned} pts
                 </Button>
               )}
               <Button variant="ghost" className="text-slate-500 hover:text-slate-900" onClick={reset}>
@@ -263,9 +281,7 @@ export default function ReportFlow({ firstName }: Props) {
 
       {/* ── SUCCESS ─────────────────────────────────────────────────────── */}
       {step === 'success' && submitted && aiResult && (() => {
-        const cat = CATEGORY_CONFIG[aiResult.category]
-        const sev = SEVERITY_CONFIG[aiResult.severity]
-        const ref = submitted.issueId.slice(0, 8).toUpperCase()
+        const bin = BIN_CONFIG[aiResult.binColor] ?? BIN_CONFIG.grey
         return (
           <div className="flex-1 flex flex-col items-center justify-center px-6 pb-16 md:pb-0 text-center gap-6">
             {/* Icon */}
@@ -275,52 +291,50 @@ export default function ReportFlow({ firstName }: Props) {
 
             {/* Headline */}
             <div className="flex flex-col gap-1">
-              <h2 className="text-2xl font-bold text-slate-900">Report Submitted!</h2>
-              <p className="text-slate-400 text-sm">Your issue has been logged and assigned</p>
+              <h2 className="text-2xl font-bold text-slate-900">Scan Logged!</h2>
+              <p className="text-slate-400 text-sm">Your waste has been classified and recorded</p>
+            </div>
+
+            {/* Points earned */}
+            <div className="flex flex-col items-center gap-1">
+              <p className="text-5xl font-bold text-green-600">+{submitted.pointsEarned}</p>
+              <p className="text-slate-400 text-sm">eco-points earned</p>
+              <p className="text-slate-500 text-xs mt-1">Total: {submitted.totalEcoPoints} pts</p>
             </div>
 
             {/* Details card */}
             <div className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-5 flex flex-col gap-3 text-left">
-              <div className="flex justify-between items-center pb-3 border-b border-slate-200">
-                <span className="text-xs text-slate-400 uppercase tracking-widest">Reference</span>
-                <span className="text-sm font-mono font-semibold text-slate-900">#{ref}</span>
-              </div>
-
               <div className="flex items-center justify-between">
-                <span className="text-sm text-slate-400">Category</span>
-                <span className="text-sm font-medium text-slate-900">{cat.emoji} {cat.label}</span>
+                <span className="text-sm text-slate-400">Waste type</span>
+                <span className="text-sm font-medium text-slate-900">{WASTE_LABEL[aiResult.wasteType]}</span>
               </div>
-
               <div className="flex items-center justify-between">
-                <span className="text-sm text-slate-400">Severity</span>
-                <span className={`text-sm font-semibold ${sev.text}`}>{sev.label}</span>
+                <span className="text-sm text-slate-400">Bin</span>
+                <div className="flex items-center gap-2">
+                  <div className={`w-3 h-3 rounded-full ${bin.dot}`} />
+                  <span className="text-sm font-medium text-slate-900">{bin.label}</span>
+                </div>
               </div>
-
               <div className="flex items-center justify-between">
-                <span className="text-sm text-slate-400">Ward</span>
-                <span className="text-sm font-medium text-slate-900">{submitted.wardName}</span>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-slate-400">Assigned to</span>
-                <span className="text-sm font-medium text-orange-500">{submitted.authorityName}</span>
+                <span className="text-sm text-slate-400">Ref</span>
+                <span className="text-sm font-mono text-slate-900">#{submitted.scanId.slice(0, 8).toUpperCase()}</span>
               </div>
             </div>
 
             {/* Actions */}
             <div className="w-full flex flex-col gap-3">
-              <Button onClick={reset} className="w-full h-12 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-xl">
-                Report Another Issue
+              <Button onClick={reset} className="w-full h-12 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-xl">
+                Scan Another Item
               </Button>
               <div className="flex gap-3 w-full">
-                <Link href="/my-reports" className="flex-1">
+                <Link href="/my-scans" className="flex-1">
                   <Button variant="outline" className="w-full h-11 border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl text-sm">
-                    My Reports
+                    My Scans
                   </Button>
                 </Link>
                 <Link href="/map" className="flex-1">
                   <Button variant="outline" className="w-full h-11 border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl text-sm">
-                    Ward Map
+                    Centers Map
                   </Button>
                 </Link>
               </div>
