@@ -65,7 +65,6 @@ export async function registerCollector(
         ward_id: ward?.id ?? null,
         score: 70,
         verified: true,
-        on_duty: true,
       },
       { onConflict: 'clerk_user_id' }
     )
@@ -101,7 +100,7 @@ export async function registerAuthority(
   const { data, error } = await db()
     .from('authorities')
     .upsert(
-      { clerk_user_id: clerkUserId, name, ward_id: wardId, score: 70, verified: true, on_duty: true },
+      { clerk_user_id: clerkUserId, name, ward_id: wardId, score: 70, verified: true },
       { onConflict: 'clerk_user_id' }
     )
     .select('id')
