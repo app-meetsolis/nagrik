@@ -1,28 +1,22 @@
-import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import { ClerkProvider } from "@clerk/nextjs";
-import "./globals.css";
+import type { Metadata, Viewport } from 'next';
+import { Inter } from 'next/font/google';
+import { ClerkProvider } from '@clerk/nextjs';
+import { ThemeProvider } from '@/context/ThemeContext';
+import './globals.css';
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: "Nagrik — Civic Accountability Platform",
-  description: "Report civic issues. Hold authorities accountable. Jaipur.",
+  title: 'Nagrik — AI Waste Segregation Platform',
+  description: 'Scan your waste, learn the right bin, and earn eco-points. AI classifies waste in 2 seconds for a cleaner India.',
+  icons: {
+    icon: [{ url: '/favicon.ico', type: 'image/x-icon' }],
+  },
 };
 
 export const viewport: Viewport = {
-  width: "device-width",
+  width: 'device-width',
   initialScale: 1,
-  maximumScale: 1,
-  themeColor: "#ffffff",
 };
 
 export default function RootLayout({
@@ -31,13 +25,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider>
-      <html
-        lang="en"
-        className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-      >
-        <body className="min-h-full flex flex-col">
-          {children}
+    <ClerkProvider
+      signInUrl="/sign-in"
+      signUpUrl="/sign-up"
+    >
+      <html lang="en">
+        <body className={`${inter.className} bg-[#0A0A0A] text-[#FAFAFA] antialiased`}>
+          <ThemeProvider>
+            {children}
+          </ThemeProvider>
         </body>
       </html>
     </ClerkProvider>

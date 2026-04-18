@@ -1,0 +1,30 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//d/hekaton/**)",
+      "Read(//d/hekaton/_bmad-output/**)",
+      "Bash(npx tsc *)",
+      "Bash(node -e \"const c = require\\('@clerk/nextjs'\\); console.log\\(Object.keys\\(c\\).filter\\(k => k.toLowerCase\\(\\).includes\\('sign'\\)\\)\\)\")",
+      "Bash(node -e \"const c = require\\('@clerk/nextjs'\\); console.log\\(Object.keys\\(c\\).filter\\(k => k.toLowerCase\\(\\).includes\\('signed'\\) || k.toLowerCase\\(\\).includes\\('auth'\\)\\)\\)\")",
+      "Bash(node -e \"const c = require\\('@clerk/nextjs'\\); console.log\\(Object.keys\\(c\\)\\)\")",
+      "Bash(ls *)",
+      "WebFetch(domain:technotarangps.vercel.app)",
+      "WebSearch",
+      "WebFetch(domain:technotarang.poornima.org)",
+      "Bash(npx firecrawl-js *)",
+      "Bash(npx @mendable/firecrawl-js)",
+      "Bash(curl *)",
+      "WebFetch(domain:github.com)",
+      "Bash(git checkout *)",
+      "Bash(npm run *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git merge *)",
+      "Bash(git push *)",
+      "Bash(python -c \"import json,sys; p=json.load\\(sys.stdin\\); print\\('deps:', list\\(p.get\\('dependencies',{}\\).keys\\(\\)\\)\\)\")",
+      "Bash(npm install *)",
+      "Bash(pkill -f \"next build\")",
+      "Bash(taskkill /F /IM node.exe)"
+    ]
+  }
+}

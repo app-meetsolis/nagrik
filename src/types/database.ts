@@ -1,18 +1,10 @@
 // ============================================================
-// Nagrik — Database Types
-// Mirrors the Supabase schema exactly
+// Nagrik — Database Types (mirrors Supabase schema)
 // ============================================================
 
 export type WasteType =
-  | 'wet_organic'
-  | 'dry_paper'
-  | 'dry_plastic'
-  | 'dry_metal'
-  | 'dry_glass'
-  | 'e_waste'
-  | 'hazardous'
-  | 'textile'
-  | 'non_recyclable'
+  | 'wet_organic' | 'dry_paper' | 'dry_plastic' | 'dry_metal'
+  | 'dry_glass' | 'e_waste' | 'hazardous' | 'textile' | 'non_recyclable'
 
 export interface Ward {
   id: string
@@ -20,6 +12,7 @@ export interface Ward {
   city: string
   score: number
   recycling_rate: number
+  zone: string
   geojson_id: string | null
   created_at: string
 }
@@ -27,9 +20,10 @@ export interface Ward {
 export interface Citizen {
   id: string
   clerk_user_id: string
-  name:  string | null
+  name: string | null
   phone: string | null
   eco_points: number
+  ward_id: string | null
   created_at: string
 }
 
@@ -54,29 +48,70 @@ export interface RecyclingCenter {
   id: string
   name: string
   address: string
+  ward_id: string | null
   lat: number
   lng: number
-  accepted_types: WasteType[]
-  ward_id: string | null
-  open_hours: string | null
+  phone: string | null
+  rating: number
+  status: 'open' | 'busy' | 'closed'
+  hours: string | null
+  accepted_types: string[]
+  total_collections: number
+  description: string | null
   created_at: string
 }
 
-// Authority type — table created in Story 2.1
 export interface Authority {
   id: string
   clerk_user_id: string
   name: string
-  ward_id: string
+  ward_id: string | null
   score: number
   resolution_count: number
   escalation_count: number
+  vehicle_number: string | null
+  employee_id: string | null
+  on_duty: boolean
   photo_url: string | null
   verified: boolean
   created_at: string
 }
 
-// Supabase Database type wrapper for createClient generics
+export interface Route {
+  id: string
+  collector_id: string | null
+  name: string
+  ward_id: string | null
+  date: string
+  status: 'active' | 'pending' | 'done'
+  distance_km: number | null
+  estimated_minutes: number | null
+  created_at: string
+}
+
+export interface RouteStop {
+  id: string
+  route_id: string
+  scan_id: string | null
+  address: string
+  status: 'pending' | 'current' | 'done'
+  sort_order: number
+}
+
+export interface CitizenRequest {
+  id: string
+  citizen_id: string | null
+  collector_id: string | null
+  address: string
+  ward_id: string | null
+  waste_type: string
+  urgency: 'high' | 'medium' | 'low'
+  description: string | null
+  image_url: string | null
+  status: 'open' | 'accepted' | 'declined' | 'completed'
+  created_at: string
+}
+
 export interface Database {
   public: {
     Tables: {
@@ -104,6 +139,21 @@ export interface Database {
         Row: Authority
         Insert: Omit<Authority, 'id' | 'created_at'>
         Update: Partial<Omit<Authority, 'id' | 'created_at'>>
+      }
+      routes: {
+        Row: Route
+        Insert: Omit<Route, 'id' | 'created_at'>
+        Update: Partial<Omit<Route, 'id' | 'created_at'>>
+      }
+      route_stops: {
+        Row: RouteStop
+        Insert: Omit<RouteStop, 'id'>
+        Update: Partial<Omit<RouteStop, 'id'>>
+      }
+      citizen_requests: {
+        Row: CitizenRequest
+        Insert: Omit<CitizenRequest, 'id' | 'created_at'>
+        Update: Partial<Omit<CitizenRequest, 'id' | 'created_at'>>
       }
     }
   }

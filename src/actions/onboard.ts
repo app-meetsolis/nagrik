@@ -1,80 +1,128 @@
 'use server'
 
 import { auth } from '@clerk/nextjs/server'
-import { clerkClient } from '@clerk/nextjs/server'
 import { createServiceClient } from '@/lib/supabase/server'
-import type { ActionResult, RegisterCitizenData, RegisterAuthorityData } from '@/types/actions'
+import type { ActionResult, RegisterCitizenData, RegisterCollectorData, CheckUserResult } from '@/types/actions'
 
-// Never exported — stays server-only, never reaches the client bundle.
-const AUTHORITY_CODE = 'NAGRIK2025'
+const COLLECTOR_CODE = 'NAGRIK2024'
 
-// ── Citizen registration ─────────────────────────────────────────────────────
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const db = () => createServiceClient() as any
+
+export async function checkExistingUser(): Promise<CheckUserResult> {
+  const { userId } = await auth()
+  if (!userId) return null
+
+  const { data: citizen } = await db()
+    .from('citizens')
+    .select('id, name')
+    .eq('clerk_user_id', userId)
+    .not('name', 'is', null)
+    .maybeSingle()
+
+  if (citizen?.name) return 'citizen'
+
+  const { data: authority } = await db()
+    .from('authorities')
+    .select('id')
+    .eq('clerk_user_id', userId)
+    .maybeSingle()
+
+  if (authority) return 'collector'
+
+  return null
+}
 
 export async function registerCitizen(
   name: string,
   phone: string,
 ): Promise<ActionResult<RegisterCitizenData>> {
   const { userId } = await auth()
-  if (!userId) return { success: false, error: 'Not signed in' }
+  if (!userId) return { success: false, error: 'Not authenticated', code: 'AUTH' }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const db = createServiceClient() as any
-  const { error } = await db
+  const { data, error } = await db()
     .from('citizens')
     .upsert(
-      { clerk_user_id: userId, name: name.trim(), phone: phone.trim() },
-      { onConflict: 'clerk_user_id' },
+      { clerk_user_id: userId, name, phone, eco_points: 0 },
+      { onConflict: 'clerk_user_id' }
     )
+    .select('id')
+    .single()
 
-  if (error) return { success: false, error: 'Could not save profile' }
+  if (error || !data) {
+    return { success: false, error: error?.message ?? 'Registration failed', code: 'DB' }
+  }
 
-  const client = await clerkClient()
-  await client.users.updateUser(userId, { publicMetadata: { role: 'citizen' } })
-
-  return { success: true, data: { redirectTo: 'citizen' } }
+  return { success: true, data: { citizenId: data.id } }
 }
 
-// ── Authority code verification ──────────────────────────────────────────────
-// Separate action so step 1 validates in isolation — no name/ward required yet.
+export async function registerCollector(
+  accessCode: string,
+): Promise<ActionResult<RegisterCollectorData>> {
+  if (accessCode !== COLLECTOR_CODE) {
+    return { success: false, error: 'Invalid access code', code: 'INVALID_CODE' }
+  }
+
+  const { userId } = await auth()
+  if (!userId) return { success: false, error: 'Not authenticated', code: 'AUTH' }
+
+  const { data: ward } = await db()
+    .from('wards')
+    .select('id')
+    .eq('geojson_id', 'ward_2')
+    .maybeSingle()
+
+  const { data, error } = await db()
+    .from('authorities')
+    .upsert(
+      {
+        clerk_user_id: userId,
+        name: 'Rajesh Kumar',
+        ward_id: ward?.id ?? null,
+        score: 70,
+        verified: true,
+        on_duty: true,
+      },
+      { onConflict: 'clerk_user_id' }
+    )
+    .select('id')
+    .single()
+
+  if (error || !data) {
+    return { success: false, error: error?.message ?? 'Registration failed', code: 'DB' }
+  }
+
+  return { success: true, data: { collectorId: data.id } }
+}
 
 export async function verifyAuthorityCode(
   code: string,
-): Promise<ActionResult<{ valid: true }>> {
-  if (code.trim() !== AUTHORITY_CODE)
-    return { success: false, error: 'Invalid authority code', code: 'BAD_CODE' }
-  return { success: true, data: { valid: true } }
+): Promise<ActionResult<{ verified: true }>> {
+  if (code !== COLLECTOR_CODE) {
+    return { success: false, error: 'Invalid access code', code: 'INVALID_CODE' }
+  }
+  return { success: true, data: { verified: true } }
 }
-
-// ── Authority registration ───────────────────────────────────────────────────
 
 export async function registerAuthority(
   name: string,
   wardId: string,
-): Promise<ActionResult<RegisterAuthorityData>> {
+): Promise<ActionResult<{ authorityId: string }>> {
   const { userId } = await auth()
-  if (!userId) return { success: false, error: 'Not signed in' }
+  if (!userId) return { success: false, error: 'Not authenticated', code: 'AUTH' }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const db = createServiceClient() as any
-  const { error } = await db
+  const { data, error } = await db()
     .from('authorities')
     .upsert(
-      {
-        clerk_user_id:    userId,
-        name:             name.trim(),
-        ward_id:          wardId,
-        score:            70,
-        resolution_count: 0,
-        escalation_count: 0,
-        verified:         false,
-      },
-      { onConflict: 'clerk_user_id' },
+      { clerk_user_id: userId, name, ward_id: wardId, score: 70, verified: true, on_duty: true },
+      { onConflict: 'clerk_user_id' }
     )
+    .select('id')
+    .single()
 
-  if (error) return { success: false, error: 'Could not save profile' }
+  if (error || !data) {
+    return { success: false, error: error?.message ?? 'Registration failed', code: 'DB' }
+  }
 
-  const client = await clerkClient()
-  await client.users.updateUser(userId, { publicMetadata: { role: 'authority' } })
-
-  return { success: true, data: { redirectTo: 'authority' } }
+  return { success: true, data: { authorityId: data.id } }
 }

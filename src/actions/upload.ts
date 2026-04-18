@@ -2,7 +2,7 @@
 
 import { auth } from '@clerk/nextjs/server'
 import { createServiceClient } from '@/lib/supabase/server'
-import type { ActionResult } from '@/types/actions'
+import type { ActionResult, UploadScanImageData } from '@/types/actions'
 
 export interface UploadPhotoData {
   url: string
@@ -57,4 +57,27 @@ export async function uploadIssuePhoto(
   }
 
   return { success: true, data: { url: publicUrl, wardId, wardName } }
+}
+
+export async function uploadScanImage(
+  formData: FormData
+): Promise<ActionResult<UploadScanImageData>> {
+  const { userId } = await auth()
+  if (!userId) return { success: false, error: 'Unauthenticated', code: 'AUTH' }
+
+  const file = formData.get('file') as File | null
+  if (!file || file.size === 0) return { success: false, error: 'No file provided', code: 'NO_FILE' }
+
+  const supabase = createServiceClient()
+  const path = `${userId}/${Date.now()}.jpg`
+
+  const { error: uploadError } = await supabase.storage
+    .from('scan-photos')
+    .upload(path, file, { contentType: file.type || 'image/jpeg', upsert: false })
+
+  if (uploadError) return { success: false, error: uploadError.message, code: 'UPLOAD_FAILED' }
+
+  const { data: { publicUrl } } = supabase.storage.from('scan-photos').getPublicUrl(path)
+
+  return { success: true, data: { url: publicUrl } }
 }
