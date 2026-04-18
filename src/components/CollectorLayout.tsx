@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { LayoutDashboard, Truck, MapPin, ClipboardList, BarChart3, Sun, Moon, LogOut } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useTheme } from '@/context/ThemeContext';
+import { SignOutButton } from '@clerk/nextjs';
 
 interface CollectorLayoutProps {
   children: React.ReactNode;
@@ -74,13 +75,14 @@ export default function CollectorLayout({ children }: CollectorLayoutProps) {
             {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             {isDark ? 'Light Mode' : 'Dark Mode'}
           </motion.button>
-          <Link
-            href="/onboarding"
-            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl border border-transparent transition-all duration-200 text-sm font-medium ${inactiveItem}`}
-          >
-            <LogOut className="w-4 h-4" />
-            Sign Out
-          </Link>
+          <SignOutButton redirectUrl="/">
+            <button
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl border border-transparent transition-all duration-200 text-sm font-medium ${inactiveItem}`}
+            >
+              <LogOut className="w-4 h-4" />
+              Sign Out
+            </button>
+          </SignOutButton>
         </div>
       </aside>
 
@@ -92,15 +94,28 @@ export default function CollectorLayout({ children }: CollectorLayoutProps) {
           </div>
           <span className={`text-sm font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>Collector</span>
         </div>
-        <motion.button
-          whileTap={{ scale: 0.88 }}
-          onClick={toggleTheme}
-          className={`w-9 h-9 rounded-full flex items-center justify-center border transition-all duration-200 ${
-            isDark ? 'bg-[#1A1A1A] border-[#2A2A2A] text-zinc-400' : 'bg-white border-gray-200 text-gray-500'
-          }`}
-        >
-          {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-        </motion.button>
+        <div className="flex items-center gap-2">
+          <motion.button
+            whileTap={{ scale: 0.88 }}
+            onClick={toggleTheme}
+            className={`w-9 h-9 rounded-full flex items-center justify-center border transition-all duration-200 ${
+              isDark ? 'bg-[#1A1A1A] border-[#2A2A2A] text-zinc-400' : 'bg-white border-gray-200 text-gray-500'
+            }`}
+          >
+            {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          </motion.button>
+          <SignOutButton redirectUrl="/">
+            <motion.button
+              whileTap={{ scale: 0.88 }}
+              className={`w-9 h-9 rounded-full flex items-center justify-center border transition-all duration-200 ${
+                isDark ? 'bg-[#1A1A1A] border-[#2A2A2A] text-zinc-400' : 'bg-white border-gray-200 text-gray-500'
+              }`}
+              aria-label="Sign out"
+            >
+              <LogOut className="w-4 h-4" />
+            </motion.button>
+          </SignOutButton>
+        </div>
       </div>
 
       {/* Main content */}

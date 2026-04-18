@@ -3,9 +3,10 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, MapPin, Camera, Trophy, ClipboardList, Sun, Moon } from 'lucide-react';
+import { Home, MapPin, Camera, Trophy, ClipboardList, Sun, Moon, LogOut } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useTheme } from '@/context/ThemeContext';
+import { SignOutButton } from '@clerk/nextjs';
 
 interface CitizenLayoutProps {
   children: React.ReactNode;
@@ -85,24 +86,48 @@ export default function CitizenLayout({ children }: CitizenLayoutProps) {
             {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             {isDark ? 'Light Mode' : 'Dark Mode'}
           </motion.button>
+          <SignOutButton redirectUrl="/">
+            <button
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl border border-transparent transition-all duration-200 text-sm font-medium ${inactiveItem}`}
+            >
+              <LogOut className="w-4 h-4" />
+              Sign Out
+            </button>
+          </SignOutButton>
         </div>
       </aside>
 
       {/* Mobile top bar */}
       <div className={`lg:hidden fixed top-0 left-0 right-0 z-40 flex justify-end px-5 pt-3 pb-2 ${isDark ? 'bg-[#0A0A0A]/80' : 'bg-[#F4F7F4]/80'} backdrop-blur-sm`}>
-        <motion.button
-          whileTap={{ scale: 0.88 }}
-          whileHover={{ scale: 1.05 }}
-          onClick={toggleTheme}
-          className={`w-9 h-9 rounded-full flex items-center justify-center border transition-all duration-200 ${
-            isDark
-              ? 'bg-[#1A1A1A] border-[#2A2A2A] text-zinc-400 hover:text-yellow-400 hover:border-yellow-400/30'
-              : 'bg-white border-gray-200 text-gray-500 hover:text-[#22C55E] hover:border-[#22C55E]/30'
-          }`}
-          aria-label="Toggle theme"
-        >
-          {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-        </motion.button>
+        <div className="flex items-center gap-2">
+          <motion.button
+            whileTap={{ scale: 0.88 }}
+            whileHover={{ scale: 1.05 }}
+            onClick={toggleTheme}
+            className={`w-9 h-9 rounded-full flex items-center justify-center border transition-all duration-200 ${
+              isDark
+                ? 'bg-[#1A1A1A] border-[#2A2A2A] text-zinc-400 hover:text-yellow-400 hover:border-yellow-400/30'
+                : 'bg-white border-gray-200 text-gray-500 hover:text-[#22C55E] hover:border-[#22C55E]/30'
+            }`}
+            aria-label="Toggle theme"
+          >
+            {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          </motion.button>
+          <SignOutButton redirectUrl="/">
+            <motion.button
+              whileTap={{ scale: 0.88 }}
+              whileHover={{ scale: 1.05 }}
+              className={`w-9 h-9 rounded-full flex items-center justify-center border transition-all duration-200 ${
+                isDark
+                  ? 'bg-[#1A1A1A] border-[#2A2A2A] text-zinc-400 hover:text-red-400 hover:border-red-400/30'
+                  : 'bg-white border-gray-200 text-gray-500 hover:text-red-500 hover:border-red-500/30'
+              }`}
+              aria-label="Sign out"
+            >
+              <LogOut className="w-4 h-4" />
+            </motion.button>
+          </SignOutButton>
+        </div>
       </div>
 
       {/* Main content */}
