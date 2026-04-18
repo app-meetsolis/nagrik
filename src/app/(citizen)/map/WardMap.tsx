@@ -1,11 +1,33 @@
 'use client'
 
 import 'leaflet/dist/leaflet.css'
-import { MapContainer, TileLayer, CircleMarker, Tooltip } from 'react-leaflet'
+import { MapContainer, TileLayer, CircleMarker, Tooltip, Popup } from 'react-leaflet'
 
 export interface WardScore {
-  name:  string
-  score: number
+  name:          string
+  recycling_rate: number
+}
+
+export interface RecyclingCenterInfo {
+  id:             string
+  name:           string
+  address:        string
+  lat:            number
+  lng:            number
+  accepted_types: string[]
+  open_hours:     string | null
+}
+
+const WASTE_LABEL: Record<string, string> = {
+  wet_organic:    'Wet Organic',
+  dry_paper:      'Paper',
+  dry_plastic:    'Plastic',
+  dry_metal:      'Metal',
+  dry_glass:      'Glass',
+  e_waste:        'E-Waste',
+  hazardous:      'Hazardous',
+  textile:        'Textile',
+  non_recyclable: 'Non-Recyclable',
 }
 
 /** Centroid [lat, lng] for each ward */
@@ -32,27 +54,24 @@ const CENTROIDS: Record<string, [number, number]> = {
   ward_20: [26.9629, 75.7358],
 }
 
-function scoreToColor(score: number): string {
-  if (score >= 80) return '#22c55e'
-  if (score >= 60) return '#86efac'
-  if (score >= 40) return '#fbbf24'
-  if (score >= 20) return '#f97316'
+function rateToColor(rate: number): string {
+  if (rate >= 70) return '#22c55e'
+  if (rate >= 40) return '#fbbf24'
   return '#ef4444'
 }
 
-function scoreLabel(score: number): string {
-  if (score >= 80) return 'Excellent'
-  if (score >= 60) return 'Good'
-  if (score >= 40) return 'Fair'
-  if (score >= 20) return 'Poor'
-  return 'Critical'
+function rateLabel(rate: number): string {
+  if (rate >= 70) return 'Good'
+  if (rate >= 40) return 'Fair'
+  return 'Poor'
 }
 
 interface Props {
   scoreMap: Record<string, WardScore>
+  centers:  RecyclingCenterInfo[]
 }
 
-export default function WardMap({ scoreMap }: Props) {
+export default function WardMap({ scoreMap, centers }: Props) {
   return (
     <MapContainer
       center={[26.9124, 75.7873]}
@@ -65,11 +84,12 @@ export default function WardMap({ scoreMap }: Props) {
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
       />
 
+      {/* Ward recycling rate circles */}
       {Object.entries(CENTROIDS).map(([wardId, [lat, lng]]) => {
         const data  = scoreMap[wardId]
-        const score = data?.score ?? 50
+        const rate  = data?.recycling_rate ?? 50
         const name  = data?.name  ?? wardId
-        const color = scoreToColor(score)
+        const color = rateToColor(rate)
 
         return (
           <CircleMarker
@@ -84,16 +104,61 @@ export default function WardMap({ scoreMap }: Props) {
             }}
           >
             <Tooltip sticky opacity={1}>
-              <div style={{ fontFamily: 'sans-serif', minWidth: 130 }}>
+              <div style={{ fontFamily: 'sans-serif', minWidth: 140 }}>
                 <b style={{ color: '#18181b' }}>{name}</b><br />
-                <span style={{ fontSize: 12, color: '#52525b' }}>Score: </span>
-                <b style={{ color }}>{score}</b>
-                <span style={{ fontSize: 11, color: '#71717a' }}> · {scoreLabel(score)}</span>
+                <span style={{ fontSize: 12, color: '#52525b' }}>Recycling rate: </span>
+                <b style={{ color }}>{rate}%</b>
+                <span style={{ fontSize: 11, color: '#71717a' }}> · {rateLabel(rate)}</span>
               </div>
             </Tooltip>
           </CircleMarker>
         )
       })}
+
+      {/* Recycling center markers */}
+      {centers.map(center => (
+        <CircleMarker
+          key={center.id}
+          center={[center.lat, center.lng]}
+          radius={10}
+          pathOptions={{
+            fillColor:   '#16a34a',
+            fillOpacity: 0.9,
+            color:       '#14532d',
+            weight:      2,
+          }}
+        >
+          <Popup>
+            <div style={{ fontFamily: 'sans-serif', minWidth: 180, maxWidth: 240 }}>
+              <p style={{ fontWeight: 700, fontSize: 14, color: '#14532d', marginBottom: 4 }}>
+                ♻ {center.name}
+              </p>
+              <p style={{ fontSize: 12, color: '#52525b', marginBottom: 6 }}>{center.address}</p>
+              {center.open_hours && (
+                <p style={{ fontSize: 11, color: '#71717a', marginBottom: 6 }}>⏰ {center.open_hours}</p>
+              )}
+              {center.accepted_types.length > 0 && (
+                <div>
+                  <p style={{ fontSize: 11, color: '#374151', fontWeight: 600, marginBottom: 3 }}>Accepts:</p>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
+                    {center.accepted_types.map(t => (
+                      <span
+                        key={t}
+                        style={{
+                          fontSize: 10, padding: '2px 6px', borderRadius: 999,
+                          background: '#dcfce7', color: '#15803d', fontWeight: 500,
+                        }}
+                      >
+                        {WASTE_LABEL[t] ?? t}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </Popup>
+        </CircleMarker>
+      ))}
     </MapContainer>
   )
 }

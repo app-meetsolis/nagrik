@@ -1,27 +1,23 @@
-import { MapPin, CheckCircle2 } from 'lucide-react'
+import { MapPin, Leaf, Recycle } from 'lucide-react'
 import { createServiceClient } from '@/lib/supabase/server'
 
 const MEDAL = ['🥇', '🥈', '🥉']
 
-const RANK_STYLE: Record<number, string> = {
+const CITIZEN_RANK_STYLE: Record<number, string> = {
   0: 'border-yellow-200 bg-yellow-50',
   1: 'border-slate-200  bg-slate-50',
   2: 'border-orange-200 bg-orange-50',
 }
 
-function scoreToColor(score: number) {
-  if (score >= 80) return 'text-green-600'
-  if (score >= 60) return 'text-emerald-600'
-  if (score >= 40) return 'text-amber-600'
-  if (score >= 20) return 'text-orange-600'
+function recyclingColor(rate: number) {
+  if (rate >= 70) return 'text-green-600'
+  if (rate >= 40) return 'text-amber-600'
   return 'text-red-600'
 }
 
-function scoreBarColor(score: number) {
-  if (score >= 80) return 'bg-green-500'
-  if (score >= 60) return 'bg-emerald-400'
-  if (score >= 40) return 'bg-amber-400'
-  if (score >= 20) return 'bg-orange-400'
+function recyclingBarColor(rate: number) {
+  if (rate >= 70) return 'bg-green-500'
+  if (rate >= 40) return 'bg-amber-400'
   return 'bg-red-500'
 }
 
@@ -29,137 +25,130 @@ export default async function LeaderboardPage() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const db = createServiceClient() as any
 
-  // Fetch all authorities sorted by score desc
-  const { data: authorities } = await db
-    .from('authorities')
-    .select('id, name, ward_id, score, resolution_count')
-    .order('score', { ascending: false }) as {
-      data: Array<{
-        id: string; name: string; ward_id: string | null
-        score: number; resolution_count: number
-      }> | null
-      error: unknown
-    }
+  const [{ data: citizens }, { data: wards }] = await Promise.all([
+    db
+      .from('citizens')
+      .select('id, name, eco_points')
+      .order('eco_points', { ascending: false })
+      .limit(20) as Promise<{
+        data: Array<{ id: string; name: string | null; eco_points: number }> | null
+        error: unknown
+      }>,
+    db
+      .from('wards')
+      .select('id, name, recycling_rate')
+      .order('recycling_rate', { ascending: false }) as Promise<{
+        data: Array<{ id: string; name: string; recycling_rate: number }> | null
+        error: unknown
+      }>,
+  ])
 
-  // Fetch all wards for name lookup
-  const { data: wards } = await db
-    .from('wards')
-    .select('id, name') as {
-      data: Array<{ id: string; name: string }> | null
-      error: unknown
-    }
+  const citizenList = (citizens ?? []).filter(c => c.name)
+  const wardList    = wards ?? []
 
-  const wardName: Record<string, string> = {}
-  for (const w of wards ?? []) wardName[w.id] = w.name
-
-  const list = (authorities ?? []).map(a => ({
-    ...a,
-    ward: a.ward_id ? (wardName[a.ward_id] ?? '—') : '—',
-  }))
-
-  const top3 = list.slice(0, 3)
-  const rest = list.slice(3)
+  const topCitizens = citizenList.slice(0, 3)
+  const restCitizens = citizenList.slice(3)
+  const topWards    = wardList.slice(0, 3)
+  const restWards   = wardList.slice(3)
 
   return (
     <div className="flex flex-col">
+      <main className="flex-1 px-4 pt-5 pb-20 md:pb-8 flex flex-col gap-8">
 
-      <main className="flex-1 px-4 pt-5 pb-20 md:pb-8 flex flex-col gap-6">
+        {/* ── Top Citizens ──────────────────────────────────────────────── */}
+        <section>
+          <div className="flex items-center gap-2 mb-3">
+            <Leaf className="w-4 h-4 text-green-600" />
+            <p className="text-xs text-slate-400 uppercase tracking-widest font-medium">Top Citizens</p>
+          </div>
 
-        {/* ── Podium — Top 3 ─────────────────────────────────────────── */}
-        {top3.length > 0 && (
-          <section>
-            <p className="text-xs text-slate-400 uppercase tracking-widest mb-3 font-medium">
-              Top Performers
-            </p>
-
+          {topCitizens.length > 0 ? (
             <div className="flex flex-col gap-3">
-              {top3.map((a, idx) => (
+              {topCitizens.map((c, idx) => (
                 <div
-                  key={a.id}
-                  className={`rounded-2xl border p-4 flex items-center gap-4 ${RANK_STYLE[idx] ?? 'border-slate-200 bg-white'}`}
+                  key={c.id}
+                  className={`rounded-2xl border p-4 flex items-center gap-4 ${CITIZEN_RANK_STYLE[idx] ?? 'border-slate-200 bg-white'}`}
                 >
-                  {/* Medal */}
                   <span className="text-3xl shrink-0">{MEDAL[idx]}</span>
-
-                  {/* Info */}
                   <div className="flex-1 min-w-0">
-                    <p className="text-slate-900 font-bold text-base truncate">{a.name}</p>
-                    <div className="flex items-center gap-1 text-slate-400 mt-0.5">
-                      <MapPin className="w-3 h-3 shrink-0" />
-                      <span className="text-xs truncate">{a.ward}</span>
-                    </div>
-                    {/* Score bar */}
+                    <p className="text-slate-900 font-bold text-base truncate">{c.name}</p>
                     <div className="w-full bg-slate-200 rounded-full h-1.5 mt-2">
                       <div
-                        className={`${scoreBarColor(a.score)} h-1.5 rounded-full`}
-                        style={{ width: `${a.score}%` }}
+                        className="bg-green-500 h-1.5 rounded-full"
+                        style={{ width: `${Math.min(100, (c.eco_points / (topCitizens[0]?.eco_points || 1)) * 100)}%` }}
                       />
                     </div>
                   </div>
-
-                  {/* Score */}
                   <div className="text-right shrink-0">
-                    <p className={`text-2xl font-bold ${scoreToColor(a.score)}`}>{a.score}</p>
-                    <div className="flex items-center gap-1 justify-end text-slate-400 mt-0.5">
-                      <CheckCircle2 className="w-3 h-3" />
-                      <span className="text-xs">{a.resolution_count}</span>
-                    </div>
+                    <p className="text-2xl font-bold text-green-600">{c.eco_points}</p>
+                    <p className="text-xs text-slate-400">pts</p>
                   </div>
                 </div>
               ))}
-            </div>
-          </section>
-        )}
 
-        {/* ── Full Rankings ───────────────────────────────────────────── */}
-        {rest.length > 0 && (
-          <section>
-            <p className="text-xs text-slate-400 uppercase tracking-widest mb-3 font-medium">
-              All Rankings
-            </p>
-
-            <div className="flex flex-col gap-2">
-              {rest.map((a, idx) => {
-                const rank = idx + 4
-                return (
-                  <div
-                    key={a.id}
-                    className="flex items-center gap-3 bg-white border border-slate-200 rounded-xl px-4 py-3"
-                  >
-                    {/* Rank number */}
-                    <span className="text-slate-300 font-mono text-sm w-6 shrink-0">#{rank}</span>
-
-                    {/* Info */}
-                    <div className="flex-1 min-w-0">
-                      <p className="text-slate-900 text-sm font-semibold truncate">{a.name}</p>
-                      <div className="flex items-center gap-1 text-slate-400">
-                        <MapPin className="w-3 h-3 shrink-0" />
-                        <span className="text-xs truncate">{a.ward}</span>
-                      </div>
-                    </div>
-
-                    {/* Resolutions */}
-                    <div className="flex items-center gap-1 text-slate-400 shrink-0">
-                      <CheckCircle2 className="w-3 h-3" />
-                      <span className="text-xs">{a.resolution_count}</span>
-                    </div>
-
-                    {/* Score */}
-                    <p className={`text-lg font-bold shrink-0 ${scoreToColor(a.score)}`}>{a.score}</p>
+              {restCitizens.map((c, idx) => (
+                <div key={c.id} className="flex items-center gap-3 bg-white border border-slate-200 rounded-xl px-4 py-3">
+                  <span className="text-slate-300 font-mono text-sm w-6 shrink-0">#{idx + 4}</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-slate-900 text-sm font-semibold truncate">{c.name}</p>
                   </div>
-                )
-              })}
+                  <p className="text-base font-bold text-green-600 shrink-0">{c.eco_points}</p>
+                  <p className="text-xs text-slate-400 shrink-0">pts</p>
+                </div>
+              ))}
             </div>
-          </section>
-        )}
+          ) : (
+            <div className="flex flex-col items-center gap-3 py-8 text-center">
+              <Leaf className="w-8 h-8 text-slate-200" />
+              <p className="text-slate-400 text-sm">No citizens have scanned waste yet.</p>
+            </div>
+          )}
+        </section>
 
-        {list.length === 0 && (
-          <div className="flex-1 flex flex-col items-center justify-center gap-3 py-20 text-center">
-            <p className="text-3xl">🏆</p>
-            <p className="text-slate-900 font-semibold">No authorities yet</p>
-            <p className="text-slate-400 text-sm">Rankings will appear once authorities are seeded.</p>
+        {/* ── Top Wards ─────────────────────────────────────────────────── */}
+        <section>
+          <div className="flex items-center gap-2 mb-3">
+            <Recycle className="w-4 h-4 text-emerald-600" />
+            <p className="text-xs text-slate-400 uppercase tracking-widest font-medium">Ward Recycling Rate</p>
           </div>
-        )}
+
+          <div className="flex flex-col gap-3">
+            {topWards.map((w, idx) => (
+              <div
+                key={w.id}
+                className={`rounded-2xl border p-4 flex items-center gap-4 ${CITIZEN_RANK_STYLE[idx] ?? 'border-slate-200 bg-white'}`}
+              >
+                <span className="text-3xl shrink-0">{MEDAL[idx]}</span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-slate-900 font-bold text-base truncate">{w.name}</p>
+                  <div className="flex items-center gap-1 text-slate-400 mt-0.5">
+                    <MapPin className="w-3 h-3 shrink-0" />
+                    <span className="text-xs">Jaipur</span>
+                  </div>
+                  <div className="w-full bg-slate-200 rounded-full h-1.5 mt-2">
+                    <div
+                      className={`${recyclingBarColor(w.recycling_rate)} h-1.5 rounded-full`}
+                      style={{ width: `${w.recycling_rate}%` }}
+                    />
+                  </div>
+                </div>
+                <div className="text-right shrink-0">
+                  <p className={`text-2xl font-bold ${recyclingColor(w.recycling_rate)}`}>{w.recycling_rate}%</p>
+                </div>
+              </div>
+            ))}
+
+            {restWards.map((w, idx) => (
+              <div key={w.id} className="flex items-center gap-3 bg-white border border-slate-200 rounded-xl px-4 py-3">
+                <span className="text-slate-300 font-mono text-sm w-6 shrink-0">#{idx + 4}</span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-slate-900 text-sm font-semibold truncate">{w.name}</p>
+                </div>
+                <p className={`text-base font-bold shrink-0 ${recyclingColor(w.recycling_rate)}`}>{w.recycling_rate}%</p>
+              </div>
+            ))}
+          </div>
+        </section>
 
       </main>
     </div>

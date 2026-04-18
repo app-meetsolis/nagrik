@@ -2,79 +2,53 @@
 
 import { auth } from '@clerk/nextjs/server'
 import { createServiceClient } from '@/lib/supabase/server'
-import { AUTHORITY_SCORE_DELTA, RESOLVE_WARD_DELTA, clampScore } from '@/lib/score'
-import type { ActionResult, ResolveIssueData } from '@/types/actions'
+import { clampScore } from '@/lib/score'
+import type { ActionResult, ConfirmPickupData } from '@/types/actions'
 
-/**
- * Resolves an in_progress issue:
- * 1. Uploads resolution photo to Storage
- * 2. Sets issue status = 'resolved', records resolved_at
- * 3. Increments authority score + resolution_count
- * 4. Inserts an escalation_event record
- *
- * FormData fields: issueId (string), photo (File)
- */
-export async function resolveIssue(
-  formData: FormData
-): Promise<ActionResult<ResolveIssueData>> {
+export async function confirmPickup(
+  scanId: string
+): Promise<ActionResult<ConfirmPickupData>> {
   const { userId } = await auth()
   if (!userId) return { success: false, error: 'Unauthenticated', code: 'AUTH' }
-
-  const issueId = formData.get('issueId') as string | null
-  const file    = formData.get('photo')   as File   | null
-
-  if (!issueId) return { success: false, error: 'Missing issueId', code: 'MISSING' }
-  if (!file || file.size === 0) return { success: false, error: 'No photo provided', code: 'NO_FILE' }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const db = createServiceClient() as any
 
-  // 1. Find authority
+  // Find authority/collector
   const { data: authority } = await db
     .from('authorities')
-    .select('id, score, resolution_count')
+    .select('id, score, resolution_count, ward_id')
     .eq('clerk_user_id', userId)
-    .single() as { data: { id: string; score: number; resolution_count: number } | null; error: unknown }
+    .single() as { data: { id: string; score: number; resolution_count: number; ward_id: string | null } | null; error: unknown }
 
   if (!authority) return { success: false, error: 'Authority record not found', code: 'NOT_AUTHORITY' }
 
-  // 2. Fetch the issue (verify ownership + get severity + ward)
-  const { data: issue } = await db
-    .from('issues')
-    .select('id, ai_severity, status, ward_id')
-    .eq('id', issueId)
-    .eq('authority_id', authority.id)
-    .single() as { data: { id: string; ai_severity: string; status: string; ward_id: string | null } | null; error: unknown }
+  // Fetch the scan — verify collector_id matches or ward matches
+  const { data: scan } = await db
+    .from('waste_scans')
+    .select('id, pickup_status, ward_id')
+    .eq('id', scanId)
+    .single() as { data: { id: string; pickup_status: string; ward_id: string | null } | null; error: unknown }
 
-  if (!issue) return { success: false, error: 'Issue not found or not assigned to you', code: 'NOT_FOUND' }
-  if (issue.status === 'resolved') return { success: false, error: 'Issue already resolved', code: 'ALREADY_RESOLVED' }
+  if (!scan) return { success: false, error: 'Scan not found', code: 'NOT_FOUND' }
+  if (scan.pickup_status === 'collected') return { success: false, error: 'Already collected', code: 'ALREADY_COLLECTED' }
 
-  // 3. Upload resolution photo
-  const path = `resolutions/${authority.id}/${issueId}.jpg`
-  const { error: uploadError } = await db.storage
-    .from('issue-photos')
-    .upload(path, file, { contentType: 'image/jpeg', upsert: true })
+  // Verify this collector owns the scan's ward
+  if (scan.ward_id && scan.ward_id !== authority.ward_id) {
+    return { success: false, error: 'This pickup is not in your ward', code: 'WRONG_WARD' }
+  }
 
-  if (uploadError) return { success: false, error: uploadError.message, code: 'UPLOAD_FAILED' }
-
-  const { data: { publicUrl: resolutionPhotoUrl } } = db.storage
-    .from('issue-photos')
-    .getPublicUrl(path)
-
-  // 4. Update issue to resolved
+  // Mark collected
   await db
-    .from('issues')
+    .from('waste_scans')
     .update({
-      status:               'resolved',
-      resolution_photo_url: resolutionPhotoUrl,
-      resolved_at:          new Date().toISOString(),
+      pickup_status: 'collected',
+      collected_at:  new Date().toISOString(),
     })
-    .eq('id', issueId)
+    .eq('id', scanId)
 
-  // 5. Update authority score + resolution_count
-  const authDelta = AUTHORITY_SCORE_DELTA[issue.ai_severity] ?? 10
-  const newScore  = clampScore(authority.score + authDelta)
-
+  // Increment authority score +5 flat
+  const newScore = clampScore(authority.score + 5)
   await db
     .from('authorities')
     .update({
@@ -83,30 +57,5 @@ export async function resolveIssue(
     })
     .eq('id', authority.id)
 
-  // 6. Record escalation event
-  await db
-    .from('escalation_events')
-    .insert({
-      issue_id:     issueId,
-      authority_id: authority.id,
-      event_type:   'resolution',
-      score_delta:  authDelta,
-    })
-
-  // 7. Update ward score (ward recovers when issue is resolved)
-  if (issue.ward_id) {
-    const { data: ward } = await db
-      .from('wards')
-      .select('score')
-      .eq('id', issue.ward_id)
-      .single() as { data: { score: number } | null; error: unknown }
-
-    if (ward) {
-      const wardDelta    = RESOLVE_WARD_DELTA[issue.ai_severity] ?? 2
-      const newWardScore = clampScore(ward.score + wardDelta)
-      await db.from('wards').update({ score: newWardScore }).eq('id', issue.ward_id)
-    }
-  }
-
-  return { success: true, data: { issueId, newScore } }
+  return { success: true, data: { scanId, newCollectorScore: newScore } }
 }
