@@ -43,11 +43,15 @@ export default function OnboardingClient({ initialRole = null }: { initialRole?:
     // Optimistically save to localStorage for immediate UX
     saveUser({ name: data.name, phone: data.phone, role: 'citizen', ward: 'Mansarovar', ecoPoints: 0, totalScans: 0 });
 
-    const result = await registerCitizen(data.name, data.phone);
-    if (!result.success) {
-      setServerError(result.error);
-      setIsSubmitting(false);
-      return;
+    try {
+      const result = await registerCitizen(data.name, data.phone);
+      if (!result.success && result.code !== 'DB') {
+        setServerError(result.error);
+        setIsSubmitting(false);
+        return;
+      }
+    } catch {
+      // DB unreachable — localStorage already populated, proceed
     }
 
     router.push('/citizen-dashboard');
@@ -57,15 +61,18 @@ export default function OnboardingClient({ initialRole = null }: { initialRole?:
     setIsSubmitting(true);
     setServerError(null);
 
-    const result = await registerCollector(data.accessCode);
-    if (!result.success) {
-      if (result.code === 'INVALID_CODE') {
-        collectorForm.setError('accessCode', { message: 'Invalid access code. Try NAGRIK2024 for demo.' });
-      } else {
-        setServerError(result.error);
+    try {
+      const result = await registerCollector(data.accessCode);
+      if (!result.success) {
+        if (result.code === 'INVALID_CODE') {
+          collectorForm.setError('accessCode', { message: 'Invalid access code. Try NAGRIK2024 for demo.' });
+          setIsSubmitting(false);
+          return;
+        }
+        // DB error — localStorage already has access code validated, proceed anyway
       }
-      setIsSubmitting(false);
-      return;
+    } catch {
+      // DB unreachable — proceed with localStorage session
     }
 
     saveUser({ name: 'Rajesh Kumar', phone: '9876543210', role: 'collector', ward: 'Mansarovar', ecoPoints: 0, totalScans: 0 });

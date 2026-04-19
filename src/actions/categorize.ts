@@ -10,28 +10,51 @@ const VALID_WASTE_TYPES = [
 
 const VALID_BIN_COLORS = ['green', 'blue', 'red', 'grey'] as const
 
-const PROMPT = `You are a waste classification AI for India.
-Analyze the photo and respond with ONLY valid JSON — no markdown, no explanation:
+const PROMPT = `You are an expert waste classification AI for Nagrik, an Indian civic waste management platform.
+
+Look at the image and output ONLY a JSON object — no markdown, no explanation, no code fences.
+
+First decide: is this actually waste/garbage/trash that needs disposal?
+WASTE = items people discard: food scraps, empty packaging, bottles, cans, wrappers, broken items, old electronics, paper, garden cuttings, used clothes, bags of trash.
+NOT WASTE = people, animals, live plants, clean objects actively in use, furniture, buildings, nature scenery, selfies, food being eaten.
+
 {
-  "wasteType": "wet_organic"|"dry_paper"|"dry_plastic"|"dry_metal"|"dry_glass"|"e_waste"|"hazardous"|"textile"|"non_recyclable",
-  "recyclable": true|false,
-  "binColor": "green"|"blue"|"red"|"grey",
-  "prepSteps": ["string", ...],
-  "tip": "string",
-  "isWaste": true|false
+  "isWaste": true or false,
+  "reason": "short phrase if isWaste=false explaining what was seen, else empty string",
+  "wasteType": one of "wet_organic"|"dry_paper"|"dry_plastic"|"dry_metal"|"dry_glass"|"e_waste"|"hazardous"|"textile"|"non_recyclable",
+  "recyclable": true or false,
+  "binColor": one of "green"|"blue"|"red"|"grey",
+  "prepSteps": array of 2–3 short action strings,
+  "tip": one concise eco-tip under 15 words,
+  "confidence": one of "high"|"medium"|"low"
 }
 
-Bin colors: green=wet organic, blue=dry recyclables, red=hazardous/e-waste, grey=non-recyclable
-prepSteps: max 3 practical steps to prepare this waste for disposal (e.g. "Rinse the container")
-tip: one short eco-tip relevant to this waste type
-isWaste: false if the photo is not waste at all (selfie, food being eaten, random interior, etc.)`
+Bin color rules:
+- green  → wet organic (food scraps, peels, garden waste, biodegradable)
+- blue   → dry recyclables (clean paper, cardboard, plastic bottles, metal cans, glass)
+- red    → hazardous or e-waste (batteries, paint, chemicals, syringes, electronics, phones, wires)
+- grey   → non-recyclable (soiled packaging, styrofoam, multilayer plastics, mixed waste)
+
+Classification hints for common Indian waste:
+- Plastic bottle/bag → dry_plastic, blue, recyclable
+- Newspaper/cardboard → dry_paper, blue, recyclable
+- Food leftovers/peels → wet_organic, green, recyclable
+- Old mobile/laptop → e_waste, red
+- Used battery/bulb → hazardous, red
+- Old cloth/garment → textile, grey or blue (clean = blue)
+- Polystyrene/thermocol → non_recyclable, grey
+- Mixed household bag → non_recyclable, grey
+- Glass bottle → dry_glass, blue, recyclable
+
+If the image is blurry or dark, make your best classification and set confidence="low".
+If isWaste=false, still fill wasteType/binColor/recyclable with sensible defaults.`
 
 const FALLBACK: ClassifyWasteData = {
   wasteType:  'non_recyclable',
   recyclable: false,
   binColor:   'grey',
-  prepSteps:  [],
-  tip:        'When in doubt, place in the grey bin.',
+  prepSteps:  ['Place in grey bin', 'Do not mix with recyclables'],
+  tip:        'When unsure, always use the grey bin.',
   isWaste:    true,
 }
 
@@ -43,20 +66,23 @@ function pointsForType(wasteType: ClassifyWasteData['wasteType'], recyclable: bo
 
 export async function classifyWaste(
   photoUrl: string
-): Promise<ActionResult<ClassifyWasteData & { pointsEarned: number }>> {
+): Promise<ActionResult<ClassifyWasteData & { pointsEarned: number; reason: string; confidence: string }>> {
   if (!process.env.OPENAI_API_KEY) {
-    return { success: true, data: { ...FALLBACK, pointsEarned: pointsForType(FALLBACK.wasteType, FALLBACK.recyclable) } }
+    return {
+      success: true,
+      data: { ...FALLBACK, pointsEarned: pointsForType(FALLBACK.wasteType, FALLBACK.recyclable), reason: '', confidence: 'high' },
+    }
   }
 
   const client     = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
   const controller = new AbortController()
-  const timeout    = setTimeout(() => controller.abort(), 8_000)
+  const timeout    = setTimeout(() => controller.abort(), 15_000)
 
   try {
     const response = await client.chat.completions.create(
       {
         model:       'gpt-4o-mini',
-        max_tokens:  200,
+        max_tokens:  300,
         temperature: 0,
         messages: [{
           role: 'user',
@@ -70,29 +96,30 @@ export async function classifyWaste(
     )
     clearTimeout(timeout)
 
-    const raw    = response.choices[0]?.message?.content?.trim() ?? ''
-    const parsed = JSON.parse(raw)
+    const raw = response.choices[0]?.message?.content?.trim() ?? ''
 
-    const wasteType = VALID_WASTE_TYPES.includes(parsed.wasteType) ? parsed.wasteType : 'non_recyclable'
+    // Strip accidental markdown fences if the model disobeys
+    const cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim()
+    const parsed  = JSON.parse(cleaned)
+
+    const isWaste    = typeof parsed.isWaste === 'boolean' ? parsed.isWaste : true
+    const reason     = typeof parsed.reason === 'string' ? parsed.reason : ''
+    const wasteType  = VALID_WASTE_TYPES.includes(parsed.wasteType) ? parsed.wasteType : 'non_recyclable'
     const recyclable = typeof parsed.recyclable === 'boolean' ? parsed.recyclable : false
     const binColor   = VALID_BIN_COLORS.includes(parsed.binColor) ? parsed.binColor : 'grey'
     const prepSteps  = Array.isArray(parsed.prepSteps) ? parsed.prepSteps.slice(0, 3) : []
     const tip        = typeof parsed.tip === 'string' ? parsed.tip : FALLBACK.tip
-    const isWaste    = typeof parsed.isWaste === 'boolean' ? parsed.isWaste : true
+    const confidence = ['high', 'medium', 'low'].includes(parsed.confidence) ? parsed.confidence : 'medium'
 
-    const data: ClassifyWasteData & { pointsEarned: number } = {
-      wasteType,
-      recyclable,
-      binColor,
-      prepSteps,
-      tip,
-      isWaste,
-      pointsEarned: pointsForType(wasteType, recyclable),
+    return {
+      success: true,
+      data: { wasteType, recyclable, binColor, prepSteps, tip, isWaste, reason, confidence, pointsEarned: pointsForType(wasteType, recyclable) },
     }
-
-    return { success: true, data }
   } catch {
     clearTimeout(timeout)
-    return { success: true, data: { ...FALLBACK, pointsEarned: pointsForType(FALLBACK.wasteType, FALLBACK.recyclable) } }
+    return {
+      success: true,
+      data: { ...FALLBACK, pointsEarned: pointsForType(FALLBACK.wasteType, FALLBACK.recyclable), reason: '', confidence: 'high' },
+    }
   }
 }

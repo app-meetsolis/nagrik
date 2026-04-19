@@ -7,6 +7,10 @@ import { useTheme } from '@/context/ThemeContext';
 import AnimatedCounter from '@/components/AnimatedCounter';
 import type { CollectorDashboardData, PickupUI, RouteUI, RequestUI } from '@/types/actions';
 
+function openGoogleMaps(address: string) {
+  window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(address + ', Jaipur, Rajasthan')}`, '_blank');
+}
+
 const FALLBACK_PICKUPS: PickupUI[] = [
   { id: 'p1', citizen: 'Janvi Sharma', phone: '9876543210', address: '12, Shanti Nagar, Mansarovar', ward: 'Mansarovar', wasteType: 'Wet Organic', binColor: 'green', binColorHex: '#22C55E', status: 'in-progress', scheduledTime: '09:00 AM', weight: '4.2 kg', notes: 'Large bag near gate' },
   { id: 'p2', citizen: 'Rahul Verma', phone: '9123456789', address: '45, Vikas Path, Vaishali Nagar', ward: 'Vaishali Nagar', wasteType: 'Dry Plastic', binColor: 'blue', binColorHex: '#3B82F6', status: 'pending', scheduledTime: '10:30 AM', weight: '2.1 kg', notes: '' },
@@ -104,7 +108,7 @@ function Dialog({ open, onClose, children, isDark }: { open: boolean; onClose: (
   );
 }
 
-function PickupDialog({ pickup, onClose, isDark }: { pickup: PickupUI | null; onClose: () => void; isDark: boolean }) {
+function PickupDialog({ pickup, onClose, onStatusChange, isDark }: { pickup: PickupUI | null; onClose: () => void; onStatusChange: (id: string, status: 'in-progress' | 'completed') => void; isDark: boolean }) {
   if (!pickup) return null;
   const text = isDark ? 'text-white' : 'text-gray-900';
   const muted = isDark ? 'text-zinc-500' : 'text-gray-500';
@@ -164,14 +168,18 @@ function PickupDialog({ pickup, onClose, isDark }: { pickup: PickupUI | null; on
 
         <div className="flex gap-3">
           {pickup.status !== 'completed' && (
-            <button className="flex-1 bg-[#22C55E] hover:bg-[#16A34A] text-black font-semibold rounded-xl h-11 text-sm transition-all duration-200">
+            <button
+              onClick={() => onStatusChange(pickup.id, pickup.status === 'pending' ? 'in-progress' : 'completed')}
+              className="flex-1 bg-[#22C55E] hover:bg-[#16A34A] text-black font-semibold rounded-xl h-11 text-sm transition-all duration-200"
+            >
               {pickup.status === 'pending' ? 'Start Pickup' : 'Mark Complete'}
             </button>
           )}
-          <button className={`flex-1 border rounded-xl h-11 text-sm font-semibold transition-all duration-200 ${isDark ? 'border-[#2A2A2A] text-zinc-300 hover:bg-[#1A1A1A]' : 'border-gray-200 text-gray-700 hover:bg-gray-50'}`}>
-            <span className="flex items-center justify-center gap-1.5">
-              <Navigation className="w-4 h-4" /> Navigate
-            </span>
+          <button
+            onClick={() => openGoogleMaps(pickup.address)}
+            className={`flex-1 border rounded-xl h-11 text-sm font-semibold transition-all duration-200 flex items-center justify-center gap-1.5 ${isDark ? 'border-[#2A2A2A] text-zinc-300 hover:bg-[#1A1A1A]' : 'border-gray-200 text-gray-700 hover:bg-gray-50'}`}
+          >
+            <Navigation className="w-4 h-4" /> Navigate
           </button>
         </div>
       </div>
@@ -254,7 +262,7 @@ function RouteDialog({ route, onClose, isDark }: { route: RouteUI | null; onClos
   );
 }
 
-function RequestDialog({ request, onClose, isDark }: { request: RequestUI | null; onClose: () => void; isDark: boolean }) {
+function RequestDialog({ request, onClose, onAccept, onDecline, isDark }: { request: RequestUI | null; onClose: () => void; onAccept: (id: string) => void; onDecline: (id: string) => void; isDark: boolean }) {
   if (!request) return null;
   const text = isDark ? 'text-white' : 'text-gray-900';
   const muted = isDark ? 'text-zinc-500' : 'text-gray-500';
@@ -313,11 +321,24 @@ function RequestDialog({ request, onClose, isDark }: { request: RequestUI | null
           </div>
         )}
 
+        <button
+          onClick={() => openGoogleMaps(request.address)}
+          className={`w-full mb-3 border rounded-xl h-10 text-sm font-semibold transition-all duration-200 flex items-center justify-center gap-1.5 ${isDark ? 'border-[#3B82F6]/30 text-[#3B82F6] hover:bg-[#3B82F6]/10' : 'border-blue-300 text-blue-600 hover:bg-blue-50'}`}
+        >
+          <Navigation className="w-4 h-4" /> Navigate to Location
+        </button>
+
         <div className="flex gap-3">
-          <button className="flex-1 bg-[#22C55E] hover:bg-[#16A34A] text-black font-semibold rounded-xl h-11 text-sm transition-all duration-200">
+          <button
+            onClick={() => onAccept(request.id)}
+            className="flex-1 bg-[#22C55E] hover:bg-[#16A34A] text-black font-semibold rounded-xl h-11 text-sm transition-all duration-200"
+          >
             Accept Request
           </button>
-          <button className={`flex-1 border rounded-xl h-11 text-sm font-semibold transition-all duration-200 ${isDark ? 'border-[#2A2A2A] text-zinc-300 hover:bg-[#1A1A1A]' : 'border-gray-200 text-gray-700 hover:bg-gray-50'}`}>
+          <button
+            onClick={() => onDecline(request.id)}
+            className={`flex-1 border rounded-xl h-11 text-sm font-semibold transition-all duration-200 ${isDark ? 'border-[#2A2A2A] text-zinc-300 hover:bg-[#1A1A1A]' : 'border-gray-200 text-gray-700 hover:bg-gray-50'}`}
+          >
             Decline
           </button>
         </div>
@@ -330,6 +351,8 @@ interface Props { data: CollectorDashboardData | null }
 
 export default function CollectorDashboardClient({ data }: Props) {
   const { isDark } = useTheme();
+  const [pickups, setPickups] = useState<PickupUI[]>(data?.pickups?.length ? data.pickups : FALLBACK_PICKUPS);
+  const [requests, setRequests] = useState<RequestUI[]>(data?.requests?.length ? data.requests : FALLBACK_REQUESTS);
   const [selectedPickup, setSelectedPickup] = useState<PickupUI | null>(null);
   const [selectedRoute, setSelectedRoute] = useState<RouteUI | null>(null);
   const [selectedRequest, setSelectedRequest] = useState<RequestUI | null>(null);
@@ -339,18 +362,46 @@ export default function CollectorDashboardClient({ data }: Props) {
   const muted = isDark ? 'text-zinc-500' : 'text-gray-500';
   const card = isDark ? 'bg-[#141414] border-[#1F1F1F] hover:border-[#2A2A2A]' : 'bg-white border-gray-200 hover:border-gray-300';
 
-  const PICKUPS = data?.pickups ?? FALLBACK_PICKUPS;
-  const ROUTES = data?.routes ?? FALLBACK_ROUTES;
-  const REQUESTS = data?.requests ?? FALLBACK_REQUESTS;
+  const ROUTES = data?.routes?.length ? data.routes : FALLBACK_ROUTES;
   const collectorName = data?.collector.name ?? 'Rajesh Kumar';
   const wardName = data?.collector.ward_name ?? 'Mansarovar Ward';
 
-  const todayPickups = PICKUPS.length;
-  const completedPickups = PICKUPS.filter(p => p.status === 'completed').length;
-  const pendingPickups = PICKUPS.filter(p => p.status === 'pending').length;
-  const urgentRequests = REQUESTS.filter(r => r.urgency === 'high').length;
+  // Weekly pickups done: starts at 34 (realistic base) + any completions in this session
+  const SESSION_BASE_COMPLETED = 34;
+  const SESSION_BASE_TOTAL = 40;
+  const sessionCompletedThisView = pickups.filter(p => p.status === 'completed').length;
+  const sessionStartCompleted = FALLBACK_PICKUPS.filter(p => p.status === 'completed').length; // 2
+  const weeklyPickupsDone = SESSION_BASE_COMPLETED + (sessionCompletedThisView - sessionStartCompleted);
 
-  const filteredPickups = pickupFilter === 'all' ? PICKUPS : PICKUPS.filter(p => p.status === pickupFilter);
+  const handlePickupStatusChange = (id: string, status: 'in-progress' | 'completed') => {
+    setPickups(prev => prev.map(p => p.id === id ? { ...p, status } : p));
+    setSelectedPickup(prev => prev?.id === id ? { ...prev, status } : prev);
+  };
+
+  const handleAcceptRequest = (id: string) => {
+    setRequests(prev => prev.filter(r => r.id !== id));
+    setSelectedRequest(null);
+  };
+
+  const handleDeclineRequest = (id: string) => {
+    setRequests(prev => prev.filter(r => r.id !== id));
+    setSelectedRequest(null);
+  };
+
+  const todayPickups = pickups.length;
+  const completedPickups = pickups.filter(p => p.status === 'completed').length;
+  const inProgressPickups = pickups.filter(p => p.status === 'in-progress').length;
+  const pendingPickups = pickups.filter(p => p.status === 'pending').length;
+  const urgentRequests = requests.filter(r => r.urgency === 'high').length;
+
+  const filteredPickups = pickupFilter === 'all' ? pickups : pickups.filter(p => p.status === pickupFilter);
+
+  // Weight-derived metrics
+  const sessionStartKg = FALLBACK_PICKUPS.filter(p => p.status === 'completed').reduce((s, p) => s + parseFloat(p.weight), 0); // 4.6
+  const completedWeightKg = pickups.filter(p => p.status === 'completed').reduce((s, p) => s + parseFloat(p.weight), 0);
+  const SESSION_BASE_KG = 127.4;
+  const weeklyKgCollected = +(SESSION_BASE_KG + (completedWeightKg - sessionStartKg)).toFixed(1);
+  const co2Saved = +(weeklyKgCollected * 0.52).toFixed(1);
 
   const stagger = {
     hidden: {},
@@ -379,24 +430,56 @@ export default function CollectorDashboardClient({ data }: Props) {
         </div>
       </motion.div>
 
-      {/* Stats Grid */}
-      <motion.div variants={stagger} initial="hidden" animate="show" className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
-        {[
-          { icon: Truck, label: "Today's Pickups", value: todayPickups, color: '#22C55E' },
-          { icon: CheckCircle2, label: 'Completed', value: completedPickups, color: '#22C55E' },
-          { icon: Clock, label: 'Pending', value: pendingPickups, color: '#F59E0B' },
-          { icon: AlertTriangle, label: 'Urgent Requests', value: urgentRequests, color: '#EF4444' },
-        ].map(({ icon: Icon, label, value, color }) => (
-          <motion.div key={label} variants={fadeUp} className={`rounded-2xl p-4 border ${card} transition-all duration-200`}>
-            <div className="flex items-center justify-between mb-3">
-              <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ backgroundColor: color + '15' }}>
-                <Icon className="w-4 h-4" style={{ color }} />
-              </div>
+      {/* Stats — hero row */}
+      <motion.div variants={stagger} initial="hidden" animate="show" className="grid grid-cols-2 gap-3 mb-3">
+        {/* Today's pickups progress */}
+        <motion.div variants={fadeUp} className="rounded-2xl p-4 border border-[#22C55E]/25 bg-[#22C55E]/5">
+          <div className="flex items-center justify-between mb-1">
+            <div className="w-8 h-8 rounded-lg bg-[#22C55E]/15 flex items-center justify-center">
+              <CheckCircle2 className="w-4 h-4 text-[#22C55E]" />
             </div>
-            <p className={`text-2xl font-bold font-tabular ${text}`}>
-              <AnimatedCounter to={value} duration={800} />
-            </p>
-            <p className={`text-xs mt-0.5 ${muted}`}>{label}</p>
+            <span className="text-xs text-[#22C55E] font-semibold">{todayPickups ? Math.round((completedPickups / todayPickups) * 100) : 0}%</span>
+          </div>
+          <p className={`text-3xl font-bold mt-1 ${text}`}>
+            <AnimatedCounter to={completedPickups} duration={800} />
+            <span className="text-zinc-500 text-xl font-normal">/{todayPickups}</span>
+          </p>
+          <p className={`text-xs mt-0.5 ${muted}`}>Pickups done today</p>
+          <div className="mt-2 h-1.5 rounded-full bg-[#22C55E]/15">
+            <motion.div
+              initial={{ width: 0 }}
+              animate={{ width: `${todayPickups ? (completedPickups / todayPickups) * 100 : 0}%` }}
+              transition={{ duration: 0.9, ease: 'easeOut' }}
+              className="h-1.5 rounded-full bg-[#22C55E]"
+            />
+          </div>
+        </motion.div>
+
+        {/* Kg collected */}
+        <motion.div variants={fadeUp} className="rounded-2xl p-4 border border-[#3B82F6]/25 bg-[#3B82F6]/5">
+          <div className="flex items-center justify-between mb-1">
+            <div className="w-8 h-8 rounded-lg bg-[#3B82F6]/15 flex items-center justify-center">
+              <Package className="w-4 h-4 text-[#3B82F6]" />
+            </div>
+            <span className="text-xs text-[#3B82F6] font-semibold">↑ 8%</span>
+          </div>
+          <p className={`text-3xl font-bold mt-1 ${text}`}>{weeklyKgCollected}<span className="text-zinc-500 text-base font-normal"> kg</span></p>
+          <p className={`text-xs mt-0.5 ${muted}`}>Waste collected this week</p>
+          <p className="text-xs text-[#3B82F6] mt-1 font-medium">≈ {co2Saved} kg CO₂ prevented</p>
+        </motion.div>
+      </motion.div>
+
+      {/* Stats — metric pills */}
+      <motion.div variants={stagger} initial="hidden" animate="show" className="grid grid-cols-4 gap-2 mb-8">
+        {[
+          { label: 'In Progress', value: inProgressPickups, color: '#F59E0B', bg: 'border-amber-500/20 bg-amber-500/8' },
+          { label: 'Pending', value: pendingPickups, color: '#6B7280', bg: 'border-zinc-500/20 bg-zinc-500/8' },
+          { label: 'Urgent', value: urgentRequests, color: '#EF4444', bg: 'border-red-500/20 bg-red-500/8' },
+          { label: 'Routes', value: ROUTES.length, color: '#A855F7', bg: 'border-purple-500/20 bg-purple-500/8' },
+        ].map(({ label, value, color, bg }) => (
+          <motion.div key={label} variants={fadeUp} className={`rounded-xl p-3 border ${bg} text-center`}>
+            <p className="text-xl font-bold" style={{ color }}><AnimatedCounter to={value} duration={600} /></p>
+            <p className="text-[10px] text-zinc-500 mt-0.5 leading-tight">{label}</p>
           </motion.div>
         ))}
       </motion.div>
@@ -431,26 +514,33 @@ export default function CollectorDashboardClient({ data }: Props) {
                     key={pickup.id}
                     whileTap={{ scale: 0.99 }}
                     onClick={() => setSelectedPickup(pickup)}
-                    className={`w-full border rounded-xl px-4 py-3.5 transition-all duration-200 text-left hover:scale-[1.005] ${card}`}
+                    className={`w-full border rounded-xl overflow-hidden transition-all duration-200 text-left hover:scale-[1.005] ${card}`}
                   >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: pickup.binColorHex }} />
-                        <div className="min-w-0">
-                          <p className={`text-sm font-semibold ${text} truncate`}>{pickup.citizen}</p>
-                          <p className={`text-xs ${muted} truncate`}>{pickup.address}</p>
+                    <div className="flex">
+                      <div className="w-[3px] self-stretch flex-shrink-0 rounded-l-xl" style={{ backgroundColor: pickup.binColorHex }} />
+                      <div className="flex-1 px-4 py-3.5">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div className="min-w-0">
+                              <p className={`text-sm font-semibold ${text} truncate`}>{pickup.citizen}</p>
+                              <p className={`text-xs ${muted} truncate`}>{pickup.address}</p>
+                            </div>
+                          </div>
+                          <div className="flex flex-col items-end gap-1.5 flex-shrink-0 ml-3">
+                            <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${cfg.bg}`}>{cfg.label}</span>
+                            <span className={`text-xs ${muted}`}>{pickup.scheduledTime}</span>
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between mt-2.5">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-medium px-2 py-0.5 rounded-full" style={{ backgroundColor: pickup.binColorHex + '18', color: pickup.binColorHex }}>
+                              {pickup.wasteType}
+                            </span>
+                            <span className={`text-xs ${muted}`}>{pickup.weight}</span>
+                          </div>
+                          <ChevronRight className={`w-4 h-4 ${muted}`} />
                         </div>
                       </div>
-                      <div className="flex flex-col items-end gap-1.5 flex-shrink-0 ml-3">
-                        <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${cfg.bg}`}>{cfg.label}</span>
-                        <span className={`text-xs ${muted}`}>{pickup.scheduledTime}</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between mt-2.5">
-                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${isDark ? 'bg-[#1A1A1A] text-zinc-400' : 'bg-gray-100 text-gray-600'}`}>
-                        {pickup.wasteType}
-                      </span>
-                      <ChevronRight className={`w-4 h-4 ${muted}`} />
                     </div>
                   </motion.button>
                 );
@@ -504,7 +594,7 @@ export default function CollectorDashboardClient({ data }: Props) {
               <span className="text-xs font-semibold text-red-400 bg-red-500/10 px-2 py-0.5 rounded-full">{urgentRequests} urgent</span>
             </div>
             <div className="space-y-2">
-              {REQUESTS.map((req: RequestUI) => {
+              {requests.map((req: RequestUI) => {
                 const ucfg = URGENCY_CONFIG[req.urgency];
                 return (
                   <motion.button
@@ -537,8 +627,9 @@ export default function CollectorDashboardClient({ data }: Props) {
             <div className={`rounded-2xl border p-5 ${card}`}>
               <div className="space-y-4">
                 {[
-                  { icon: Recycle, label: 'Pickups Done', value: 34, total: 40, color: '#22C55E' },
-                  { icon: TrendingUp, label: 'Efficiency', value: 92, total: 100, color: '#3B82F6', suffix: '%' },
+                  { icon: Recycle, label: 'Pickups Done', value: weeklyPickupsDone, total: SESSION_BASE_TOTAL, color: '#22C55E' },
+                  { icon: Package, label: 'Kg Collected', value: Math.round(weeklyKgCollected), total: 150, color: '#3B82F6' },
+                  { icon: TrendingUp, label: 'Efficiency', value: 92, total: 100, color: '#06B6D4', suffix: '%' },
                   { icon: Flame, label: 'Streak', value: 7, total: 7, color: '#F59E0B', suffix: ' days' },
                   { icon: Star, label: 'Citizen Rating', value: 4.8, total: 5, color: '#A855F7', suffix: '/5' },
                 ].map(({ icon: Icon, label, value, total, color, suffix }) => (
@@ -567,9 +658,9 @@ export default function CollectorDashboardClient({ data }: Props) {
         </div>
       </div>
 
-      <PickupDialog pickup={selectedPickup} onClose={() => setSelectedPickup(null)} isDark={isDark} />
+      <PickupDialog pickup={selectedPickup} onClose={() => setSelectedPickup(null)} onStatusChange={handlePickupStatusChange} isDark={isDark} />
       <RouteDialog route={selectedRoute} onClose={() => setSelectedRoute(null)} isDark={isDark} />
-      <RequestDialog request={selectedRequest} onClose={() => setSelectedRequest(null)} isDark={isDark} />
+      <RequestDialog request={selectedRequest} onClose={() => setSelectedRequest(null)} onAccept={handleAcceptRequest} onDecline={handleDeclineRequest} isDark={isDark} />
     </div>
   );
 }

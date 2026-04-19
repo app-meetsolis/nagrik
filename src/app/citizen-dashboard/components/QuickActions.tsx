@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Camera, MapPin, Trophy, ClipboardList } from 'lucide-react';
+import { Camera, MapPin, Trophy, ShoppingBag } from 'lucide-react';
 import { useTheme } from '@/context/ThemeContext';
 
 const ACTIONS = [
@@ -32,12 +32,12 @@ const ACTIONS = [
     description: 'See your ranking',
   },
   {
-    key: 'action-scans',
-    icon: ClipboardList,
-    label: 'My Scans',
-    href: '/my-scans',
+    key: 'action-marketplace',
+    icon: ShoppingBag,
+    label: 'Marketplace',
+    href: '/marketplace',
     accent: false,
-    description: 'Scan history',
+    description: 'Redeem eco-points',
   },
 ];
 

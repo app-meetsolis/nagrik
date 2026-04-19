@@ -72,6 +72,40 @@ export const MOCK_SCANS: ScanRecord[] = [
   { id: 'scan-008', wasteType: 'Metal Can', binColor: 'blue', binColorHex: '#3B82F6', binLabel: 'Blue Bin', recyclable: true, points: 10, status: 'collected', ward: 'Mansarovar', timestamp: Date.now() - 5 * 24 * 60 * 60 * 1000 },
 ];
 
+export interface CouponRecord {
+  id: string;
+  offerId: string;
+  offerTitle: string;
+  code: string;
+  pointsCost: number;
+  redeemedAt: number;
+  expiresAt: number;
+}
+
+const COUPONS_KEY = 'nagrik_coupons';
+
+export function getCoupons(): CouponRecord[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const raw = localStorage.getItem(COUPONS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch { return []; }
+}
+
+export function addCoupon(coupon: CouponRecord): void {
+  if (typeof window === 'undefined') return;
+  const existing = getCoupons();
+  localStorage.setItem(COUPONS_KEY, JSON.stringify([coupon, ...existing]));
+}
+
+export function deductPoints(amount: number): void {
+  if (typeof window === 'undefined') return;
+  const user = getUser();
+  if (!user) return;
+  user.ecoPoints = Math.max(0, (user.ecoPoints ?? 0) - amount);
+  saveUser(user);
+}
+
 export function getTimeAgo(timestamp: number): string {
   const diff = Date.now() - timestamp;
   const minutes = Math.floor(diff / 60000);

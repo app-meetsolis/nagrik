@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, MapPin, Camera, Trophy, ClipboardList, Sun, Moon, LogOut } from 'lucide-react';
+import { Home, MapPin, Camera, Trophy, ShoppingBag, Sun, Moon, LogOut } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useTheme } from '@/context/ThemeContext';
 import { signOut } from '@/actions/auth';
@@ -17,8 +17,9 @@ const NAV_ITEMS = [
   { href: '/map', icon: MapPin, label: 'Centers', key: 'nav-map' },
   { href: '/scan-flow', icon: Camera, label: 'Scan', key: 'nav-scan', isFab: true },
   { href: '/leaderboard', icon: Trophy, label: 'Board', key: 'nav-board' },
-  { href: '/my-scans', icon: ClipboardList, label: 'Scans', key: 'nav-scans' },
+  { href: '/marketplace', icon: ShoppingBag, label: 'Store', key: 'nav-store' },
 ];
+
 
 export default function CitizenLayout({ children }: CitizenLayoutProps) {
   const pathname = usePathname();

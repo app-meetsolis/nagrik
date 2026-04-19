@@ -2,17 +2,19 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Truck, CheckCircle2, Clock, AlertTriangle, MapPin, Package, X, ChevronRight, User, Phone, Navigation } from 'lucide-react';
+import { Truck, CheckCircle2, Clock, MapPin, Package, X, ChevronRight, User, Phone, Navigation, Weight } from 'lucide-react';
 import { useTheme } from '@/context/ThemeContext';
 import AnimatedCounter from '@/components/AnimatedCounter';
 import type { CollectorDashboardData, PickupUI } from '@/types/actions';
 
 const FALLBACK: PickupUI[] = [
-  { id: 'p1', citizen: 'Janvi Sharma', phone: '9876543210', address: '12, Shanti Nagar, Mansarovar', ward: 'Mansarovar', wasteType: 'Wet Organic', binColor: 'green', binColorHex: '#22C55E', status: 'in-progress', scheduledTime: '09:00 AM', weight: '4.2 kg', notes: 'Large bag near gate' },
-  { id: 'p2', citizen: 'Rahul Verma', phone: '9123456789', address: '45, Vikas Path, Vaishali Nagar', ward: 'Vaishali Nagar', wasteType: 'Dry Plastic', binColor: 'blue', binColorHex: '#3B82F6', status: 'pending', scheduledTime: '10:30 AM', weight: '2.1 kg', notes: '' },
-  { id: 'p3', citizen: 'Priya Singh', phone: '9988776655', address: '7, Lal Kothi, Civil Lines', ward: 'Civil Lines', wasteType: 'E-Waste', binColor: 'red', binColorHex: '#EF4444', status: 'pending', scheduledTime: '11:00 AM', weight: '1.5 kg', notes: 'Old electronics — handle carefully' },
-  { id: 'p4', citizen: 'Mohan Das', phone: '9765432100', address: '23, Gandhi Nagar, Sanganer', ward: 'Sanganer', wasteType: 'Glass', binColor: 'blue', binColorHex: '#3B82F6', status: 'completed', scheduledTime: '08:00 AM', weight: '3.8 kg', notes: '' },
-  { id: 'p5', citizen: 'Sunita Joshi', phone: '9654321098', address: '56, Pratap Nagar, Sanganer', ward: 'Sanganer', wasteType: 'Hazardous', binColor: 'red', binColorHex: '#EF4444', status: 'completed', scheduledTime: '08:30 AM', weight: '0.8 kg', notes: 'Chemical waste — use gloves' },
+  { id: 'p1', citizen: 'Janvi Sharma',  phone: '9876543210', address: '12, Shanti Nagar, Mansarovar, Jaipur',       ward: 'Mansarovar',       wasteType: 'Wet Organic',  binColor: 'green', binColorHex: '#22C55E', status: 'in-progress', scheduledTime: '09:00 AM', weight: '4.2 kg', notes: 'Large bag near gate' },
+  { id: 'p2', citizen: 'Rahul Verma',   phone: '9123456789', address: '45, Vikas Path, Vaishali Nagar, Jaipur',     ward: 'Vaishali Nagar',   wasteType: 'Dry Plastic',  binColor: 'blue',  binColorHex: '#3B82F6', status: 'pending',     scheduledTime: '10:30 AM', weight: '2.1 kg', notes: '' },
+  { id: 'p3', citizen: 'Priya Singh',   phone: '9988776655', address: '7, Lal Kothi, Civil Lines, Jaipur',          ward: 'Civil Lines',       wasteType: 'E-Waste',      binColor: 'red',   binColorHex: '#EF4444', status: 'pending',     scheduledTime: '11:00 AM', weight: '1.5 kg', notes: 'Old electronics — handle carefully' },
+  { id: 'p4', citizen: 'Mohan Das',     phone: '9765432100', address: '23, Gandhi Nagar, Sanganer, Jaipur',         ward: 'Sanganer',          wasteType: 'Glass',        binColor: 'blue',  binColorHex: '#3B82F6', status: 'completed',   scheduledTime: '08:00 AM', weight: '3.8 kg', notes: '' },
+  { id: 'p5', citizen: 'Sunita Joshi',  phone: '9654321098', address: '56, Pratap Nagar, Sanganer, Jaipur',        ward: 'Sanganer',          wasteType: 'Hazardous',    binColor: 'red',   binColorHex: '#EF4444', status: 'completed',   scheduledTime: '08:30 AM', weight: '0.8 kg', notes: 'Chemical waste — use gloves' },
+  { id: 'p6', citizen: 'Arjun Mehta',   phone: '9812345670', address: '88, Bajaj Nagar, Jhotwara, Jaipur',         ward: 'Jhotwara',          wasteType: 'Wet Organic',  binColor: 'green', binColorHex: '#22C55E', status: 'pending',     scheduledTime: '11:30 AM', weight: '3.1 kg', notes: '' },
+  { id: 'p7', citizen: 'Rekha Sharma',  phone: '9701234567', address: '14, Raja Park, Mansarovar, Jaipur',         ward: 'Mansarovar',        wasteType: 'Paper/Cardboard', binColor: 'blue', binColorHex: '#3B82F6', status: 'pending', scheduledTime: '12:00 PM', weight: '1.9 kg', notes: '' },
 ];
 
 const STATUS = {
@@ -23,11 +25,15 @@ const STATUS = {
 
 type Filter = 'all' | 'pending' | 'in-progress' | 'completed';
 
+function openGoogleMaps(address: string) {
+  window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(address)}`, '_blank');
+}
+
 interface Props { data: CollectorDashboardData | null }
 
 export default function PickupsClient({ data }: Props) {
   const { isDark } = useTheme();
-  const pickups = data?.pickups ?? FALLBACK;
+  const [pickups, setPickups] = useState<PickupUI[]>(data?.pickups?.length ? data.pickups : FALLBACK);
   const [filter, setFilter] = useState<Filter>('all');
   const [selected, setSelected] = useState<PickupUI | null>(null);
 
@@ -36,12 +42,18 @@ export default function PickupsClient({ data }: Props) {
   const muted = isDark ? 'text-zinc-500' : 'text-gray-500';
   const elevated = isDark ? 'bg-[#1A1A1A] border-[#2A2A2A]' : 'bg-gray-50 border-gray-200';
 
-  const total = pickups.length;
-  const completed = pickups.filter(p => p.status === 'completed').length;
-  const pending = pickups.filter(p => p.status === 'pending').length;
-  const inProgress = pickups.filter(p => p.status === 'in-progress').length;
+  const total       = pickups.length;
+  const completed   = pickups.filter(p => p.status === 'completed').length;
+  const pending     = pickups.filter(p => p.status === 'pending').length;
+  const inProgress  = pickups.filter(p => p.status === 'in-progress').length;
+  const totalKg     = pickups.filter(p => p.status === 'completed').reduce((s, p) => s + parseFloat(p.weight), 0);
 
   const filtered = filter === 'all' ? pickups : pickups.filter(p => p.status === filter);
+
+  const handleStatusChange = (id: string, status: 'in-progress' | 'completed') => {
+    setPickups(prev => prev.map(p => p.id === id ? { ...p, status } : p));
+    setSelected(prev => prev?.id === id ? { ...prev, status } : prev);
+  };
 
   return (
     <div className="px-4 lg:px-8 py-6 max-w-4xl mx-auto">
@@ -55,24 +67,54 @@ export default function PickupsClient({ data }: Props) {
         </div>
       </motion.div>
 
-      {/* Stats */}
-      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }} className="grid grid-cols-4 gap-3 mb-6">
+      {/* Hero stats */}
+      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.06 }} className="grid grid-cols-2 gap-3 mb-3">
+        <div className="rounded-2xl p-4 border border-[#22C55E]/25 bg-[#22C55E]/5">
+          <div className="flex items-center justify-between mb-1">
+            <div className="w-8 h-8 rounded-lg bg-[#22C55E]/15 flex items-center justify-center">
+              <CheckCircle2 className="w-4 h-4 text-[#22C55E]" />
+            </div>
+            <span className="text-xs text-[#22C55E] font-semibold">{total ? Math.round((completed / total) * 100) : 0}%</span>
+          </div>
+          <p className={`text-3xl font-bold mt-1 ${text}`}>
+            <AnimatedCounter to={completed} duration={700} />
+            <span className="text-zinc-500 text-xl font-normal">/{total}</span>
+          </p>
+          <p className={`text-xs mt-0.5 ${muted}`}>Pickups done today</p>
+          <div className="mt-2 h-1.5 rounded-full bg-[#22C55E]/15">
+            <motion.div initial={{ width: 0 }} animate={{ width: `${total ? (completed / total) * 100 : 0}%` }} transition={{ duration: 0.9, ease: 'easeOut' }} className="h-1.5 rounded-full bg-[#22C55E]" />
+          </div>
+        </div>
+
+        <div className="rounded-2xl p-4 border border-[#3B82F6]/25 bg-[#3B82F6]/5">
+          <div className="flex items-center justify-between mb-1">
+            <div className="w-8 h-8 rounded-lg bg-[#3B82F6]/15 flex items-center justify-center">
+              <Package className="w-4 h-4 text-[#3B82F6]" />
+            </div>
+            <span className="text-xs text-[#3B82F6] font-semibold">collected</span>
+          </div>
+          <p className={`text-3xl font-bold mt-1 ${text}`}>{totalKg.toFixed(1)}<span className="text-zinc-500 text-base font-normal"> kg</span></p>
+          <p className={`text-xs mt-0.5 ${muted}`}>Waste picked up today</p>
+          <p className="text-xs text-[#3B82F6] mt-1 font-medium">≈ {(totalKg * 0.52).toFixed(1)} kg CO₂ prevented</p>
+        </div>
+      </motion.div>
+
+      {/* Metric pills */}
+      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="grid grid-cols-3 gap-2 mb-6">
         {[
-          { icon: Truck,       label: 'Total',       value: total,      color: '#22C55E' },
-          { icon: CheckCircle2,label: 'Completed',   value: completed,  color: '#22C55E' },
-          { icon: AlertTriangle,label:'In Progress', value: inProgress, color: '#F59E0B' },
-          { icon: Clock,       label: 'Pending',     value: pending,    color: '#6B7280' },
-        ].map(({ icon: Icon, label, value, color }) => (
-          <div key={label} className={`border rounded-xl p-3 ${card}`}>
-            <Icon className="w-4 h-4 mb-1.5" style={{ color }} />
-            <p className="text-lg font-bold" style={{ color }}><AnimatedCounter to={value} duration={600} /></p>
-            <p className={`text-[10px] ${muted} mt-0.5`}>{label}</p>
+          { label: 'In Progress', value: inProgress, color: '#F59E0B', bg: 'border-amber-500/20 bg-amber-500/8' },
+          { label: 'Pending',     value: pending,    color: '#6B7280', bg: 'border-zinc-500/20 bg-zinc-500/8' },
+          { label: 'Total',       value: total,      color: '#A855F7', bg: 'border-purple-500/20 bg-purple-500/8' },
+        ].map(({ label, value, color, bg }) => (
+          <div key={label} className={`rounded-xl p-3 border ${bg} text-center`}>
+            <p className="text-xl font-bold" style={{ color }}><AnimatedCounter to={value} duration={600} /></p>
+            <p className="text-[10px] text-zinc-500 mt-0.5">{label}</p>
           </div>
         ))}
       </motion.div>
 
       {/* Filter tabs */}
-      <div className="flex gap-2 mb-4">
+      <div className="flex gap-2 mb-4 flex-wrap">
         {(['all', 'pending', 'in-progress', 'completed'] as Filter[]).map((f) => (
           <button
             key={f}
@@ -99,24 +141,29 @@ export default function PickupsClient({ data }: Props) {
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: idx * 0.04, duration: 0.25 }}
               onClick={() => setSelected(p)}
-              className={`w-full border rounded-xl px-4 py-3.5 text-left transition-all duration-200 hover:scale-[1.005] ${card}`}
+              className={`w-full border rounded-xl overflow-hidden text-left transition-all duration-200 hover:scale-[1.005] ${card}`}
             >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: p.binColorHex }} />
-                  <div className="min-w-0">
-                    <p className={`text-sm font-semibold ${text} truncate`}>{p.citizen}</p>
-                    <p className={`text-xs ${muted} truncate`}>{p.address}</p>
+              <div className="flex">
+                <div className="w-[3px] self-stretch flex-shrink-0" style={{ backgroundColor: p.binColorHex }} />
+                <div className="flex-1 px-4 py-3.5">
+                  <div className="flex items-center justify-between">
+                    <div className="min-w-0">
+                      <p className={`text-sm font-semibold ${text} truncate`}>{p.citizen}</p>
+                      <p className={`text-xs ${muted} truncate`}>{p.address}</p>
+                    </div>
+                    <div className="flex flex-col items-end gap-1.5 flex-shrink-0 ml-3">
+                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${cfg.bg}`}>{cfg.label}</span>
+                      <span className={`text-xs ${muted}`}>{p.scheduledTime}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between mt-2.5">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-medium px-2 py-0.5 rounded-full" style={{ backgroundColor: p.binColorHex + '18', color: p.binColorHex }}>{p.wasteType}</span>
+                      <span className={`text-xs ${muted}`}>{p.weight}</span>
+                    </div>
+                    <ChevronRight className={`w-4 h-4 ${muted}`} />
                   </div>
                 </div>
-                <div className="flex flex-col items-end gap-1.5 flex-shrink-0 ml-3">
-                  <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${cfg.bg}`}>{cfg.label}</span>
-                  <span className={`text-xs ${muted}`}>{p.scheduledTime}</span>
-                </div>
-              </div>
-              <div className="flex items-center justify-between mt-2.5">
-                <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${isDark ? 'bg-[#1A1A1A] text-zinc-400' : 'bg-gray-100 text-gray-600'}`}>{p.wasteType}</span>
-                <ChevronRight className={`w-4 h-4 ${muted}`} />
               </div>
             </motion.button>
           );
@@ -194,11 +241,17 @@ export default function PickupsClient({ data }: Props) {
 
               <div className="flex gap-3">
                 {selected.status !== 'completed' && (
-                  <button className="flex-1 bg-[#22C55E] hover:bg-[#16A34A] text-black font-semibold rounded-xl h-11 text-sm transition-all duration-200">
+                  <button
+                    onClick={() => handleStatusChange(selected.id, selected.status === 'pending' ? 'in-progress' : 'completed')}
+                    className="flex-1 bg-[#22C55E] hover:bg-[#16A34A] text-black font-semibold rounded-xl h-11 text-sm transition-all duration-200"
+                  >
                     {selected.status === 'pending' ? 'Start Pickup' : 'Mark Complete'}
                   </button>
                 )}
-                <button className={`flex-1 border rounded-xl h-11 text-sm font-semibold transition-all duration-200 flex items-center justify-center gap-1.5 ${isDark ? 'border-[#2A2A2A] text-zinc-300 hover:bg-[#1A1A1A]' : 'border-gray-200 text-gray-700 hover:bg-gray-50'}`}>
+                <button
+                  onClick={() => openGoogleMaps(selected.address)}
+                  className={`flex-1 border rounded-xl h-11 text-sm font-semibold transition-all duration-200 flex items-center justify-center gap-1.5 ${isDark ? 'border-[#2A2A2A] text-zinc-300 hover:bg-[#1A1A1A]' : 'border-gray-200 text-gray-700 hover:bg-gray-50'}`}
+                >
                   <Navigation className="w-4 h-4" /> Navigate
                 </button>
               </div>

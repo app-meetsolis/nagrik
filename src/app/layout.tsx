@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import { ThemeProvider } from '@/context/ThemeContext';
+import { Toaster } from '@/components/ui/sonner';
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -28,6 +29,7 @@ export default function RootLayout({
       <body className={`${inter.className} bg-[#0A0A0A] text-[#FAFAFA] antialiased`}>
         <ThemeProvider>
           {children}
+          <Toaster position="top-center" richColors />
         </ThemeProvider>
       </body>
     </html>
